@@ -10,7 +10,7 @@ from torchvision.transforms import v2
 from torchvision.io import read_image
 
 plt.rcParams["savefig.bbox"] = 'tight'
-
+PIC_PATH='/Users/kristinaqualben/Desktop/Fun/puppy_pics/data/oxford-pets'
 torch.manual_seed(1)
 
 class Net(nn.Module):
@@ -18,13 +18,16 @@ class Net(nn.Module):
         super().__init__()
         # Define feature extractor
         self.feature_extractor = nn.Sequential(
-           nn.Conv2d(3, int(resize_n/2), kernel_size=3, padding=1),
+           nn.Conv2d(3, 32, kernel_size=3, padding=1),
+           nn.ELU(),
+           nn.MaxPool2d(kernel_size=2),
+           nn.Conv2d(32, 64, kernel_size=3, padding=1),
            nn.ELU(),
            nn.MaxPool2d(kernel_size=2),
            nn.Flatten(),
            )
         # Define classifier
-        self.classifier = nn.Linear(int(resize_n/2)*int(resize_n/8)*int(resize_n/8), num_classes)
+        self.classifier = nn.Linear(64*16*16, num_classes)
 
     def forward(self, x):
         # Pass input through feature extractor and classifier
@@ -33,13 +36,14 @@ class Net(nn.Module):
         return x
 
 class Bowzer():
-    def __init__(self, resize_n:int = 128):
+    def __init__(self, resize_n:int = 64):
         self.resize_n = resize_n
         self.train_transforms = (
             transforms
             .Compose([
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomRotation(45),
+                transforms.RandomAutocontrast(),
                 transforms.ToTensor(),
                 transforms.Resize((self.resize_n,self.resize_n))
             ])
@@ -52,7 +56,7 @@ class Bowzer():
             ])
         )
         self.dataset_train = OxfordIIITPet(
-                root='./data/oxford-pets',
+                root=PIC_PATH,
                 target_types='category',
                 download=True,
                 transform=self.train_transforms
@@ -66,11 +70,18 @@ class Bowzer():
                 )
     
         self.dataset_test = OxfordIIITPet(
-                root='./data/oxford-pets',
+                root=PIC_PATH,
                 target_types='category',
                 download=True,
                 split="test",
                 transform=self.test_transforms
+                )
+        self.dataloader_test = (
+            DataLoader(
+                self.dataset_test,
+                shuffle=True, 
+                batch_size=16
+                )
                 )
         # self.dataset_predict =(
         #       ImageFolder("puppy_pics",
@@ -80,20 +91,41 @@ class Bowzer():
         
     def train(self, epochs:int=3):
         #Define the model
-        net = Net(num_classes =7, resize_n=self.resize_n)
+        self.net = Net(num_classes=len(self.dataset_train.classes), resize_n=self.resize_n)
         # Define the loss function
         criterion = nn.CrossEntropyLoss()
         # Define the optimizer
-        optimizer = torch.optim.Adam(net.parameters(), lr = 0.001)
+        optimizer = torch.optim.Adam(self.net.parameters(), lr = 0.001)
         for epoch in range(epochs):
             running_loss = 0.0
             # Iterate over training batches
             for images, labels in self.dataloader_train:
                 optimizer.zero_grad()
-                outputs = net(images)
+                outputs = self.net(images)
                 loss = criterion(outputs, labels)
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item()
             epoch_loss = running_loss / len(self.dataloader_train)
             print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}")
+
+    def evaluate(self):
+        metric_precision = Precision(
+            task='multiclass',
+            num_classes=len(self.dataset_train.classes),
+            average='micro')
+        metric_recall = Recall(
+            task='multiclass',
+            num_classes=len(self.dataset_train.classes),
+            average='micro')
+        self.net.eval()
+        with torch.no_grad():
+            for images, labels in self.dataloader_test:
+                outputs = self.net(images)
+                _, preds = torch.max(outputs, 1)
+                metric_precision(preds, labels)
+                metric_recall(preds, labels)
+            precision = metric_precision.compute()
+            recall = metric_recall.compute()
+            print(f"Precision: {precision}")
+            print(f"Recall: {recall}")
