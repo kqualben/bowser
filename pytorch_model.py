@@ -18,16 +18,16 @@ class Net(nn.Module):
         super().__init__()
         # Define feature extractor
         self.feature_extractor = nn.Sequential(
-           nn.Conv2d(3, 32, kernel_size=3, padding=1),
+           nn.Conv2d(3, resize_n/2, kernel_size=3, padding=1),
            nn.ELU(),
            nn.MaxPool2d(kernel_size=2),
-           nn.Conv2d(32, 64, kernel_size=3, padding=1),
+           nn.Conv2d(resize_n/2, resize_n, kernel_size=3, padding=1),
            nn.ELU(),
            nn.MaxPool2d(kernel_size=2),
            nn.Flatten(),
            )
         # Define classifier
-        self.classifier = nn.Linear(64*16*16, num_classes)
+        self.classifier = nn.Linear(resize_n**2, num_classes)
 
     def forward(self, x):
         # Pass input through feature extractor and classifier
@@ -83,11 +83,7 @@ class Bowzer():
                 batch_size=16
                 )
                 )
-        # self.dataset_predict =(
-        #       ImageFolder("puppy_pics",
-        #                   transform=self.test_transforms
-        #                   )
-        #       )
+        
         
     def train(self, epochs:int=3):
         #Define the model
@@ -95,29 +91,29 @@ class Bowzer():
         # Define the loss function
         criterion = nn.CrossEntropyLoss()
         # Define the optimizer
-        optimizer = torch.optim.Adam(self.net.parameters(), lr = 0.001)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr = 0.001)
         for epoch in range(epochs):
-            running_loss = 0.0
+            self.running_loss = 0.0
             # Iterate over training batches
             for images, labels in self.dataloader_train:
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 outputs = self.net(images)
                 loss = criterion(outputs, labels)
                 loss.backward()
-                optimizer.step()
-                running_loss += loss.item()
-            epoch_loss = running_loss / len(self.dataloader_train)
+                self.optimizer.step()
+                self.running_loss += loss.item()
+            epoch_loss = self.running_loss / len(self.dataloader_train)
             print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}")
 
     def evaluate(self):
         metric_precision = Precision(
             task='multiclass',
             num_classes=len(self.dataset_train.classes),
-            average='micro')
+            average='macro')
         metric_recall = Recall(
             task='multiclass',
             num_classes=len(self.dataset_train.classes),
-            average='micro')
+            average='macro')
         self.net.eval()
         with torch.no_grad():
             for images, labels in self.dataloader_test:
@@ -125,7 +121,9 @@ class Bowzer():
                 _, preds = torch.max(outputs, 1)
                 metric_precision(preds, labels)
                 metric_recall(preds, labels)
-            precision = metric_precision.compute()
-            recall = metric_recall.compute()
-            print(f"Precision: {precision}")
-            print(f"Recall: {recall}")
+            self.precision = metric_precision.compute()
+            self.recall = metric_recall.compute()
+            print(f"Precision: {self.precision}")
+            print(f"Recall: {self.recall}")
+
+            
