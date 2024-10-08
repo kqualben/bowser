@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision
-#from torchvision.datasets import OxfordIIITPet
+from torchvision.datasets import OxfordIIITPet
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchmetrics import Precision, Recall
@@ -19,23 +19,22 @@ DATASET = 'stanford_dogs'
 torch.manual_seed(1)
 
 class Net(nn.Module):
-    def __init__(self, num_classes:int):
+    def __init__(self, num_classes:int, resize_n:int):
         super().__init__()
         # Define feature extractor
         self.feature_extractor = nn.Sequential(
-           nn.Conv2d(3, 32, kernel_size=3, padding=1),
+           nn.Conv2d(3, resize_n/2, kernel_size=3, padding=1),
            nn.ELU(),
            nn.MaxPool2d(kernel_size=2),
-           nn.Conv2d(32, 64, kernel_size=3, padding=1),
+           nn.Conv2d(resize_n/2, resize_n, kernel_size=3, padding=1),
            nn.ELU(),
            nn.MaxPool2d(kernel_size=2),
            nn.Flatten(),
            )
         # Define classifier
-        self.classifier = nn.Linear(64*16*16, num_classes)
+        self.classifier = nn.Linear(resize_n**2, num_classes)
 
     def forward(self, x):
-        x = torch.as_tensor(x, device='cuda')
         x = self.feature_extractor(x)
         x = self.classifier(x)
         return x
@@ -56,13 +55,32 @@ class preprocessDataset(torch.utils.data.Dataset):
     
 
 class Bowzer():
-    def __init__(self, resize_n:int = 128, num_classes:int=120):
+    def __init__(self, resize_n:int = 64, num_classes:int=37):
         self.resize_n = resize_n
         self.num_classes = num_classes
-        weights = torchvision.models.resnet.ResNet50_Weights.DEFAULT
-   
-        self.raw_train_data, self.train_info = tfds.load(DATASET, split='train', shuffle_files=True, data_dir = f"{DIR}/tensorflow_datasets/", with_info=True)
-        self.raw_test_data, self.test_info = tfds.load(DATASET, split='test', shuffle_files=True, data_dir = f"{DIR}/tensorflow_datasets/", with_info=True)
+        self.train_transforms = (
+            transforms
+            .Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomRotation(45),
+                transforms.RandomAutocontrast(),
+                transforms.ToTensor(),
+                transforms.Resize((self.resize_n,self.resize_n))
+            ])
+        )
+        self.test_transforms = (
+            transforms
+            .Compose([
+                transforms.ToTensor(),
+                transforms.Resize((self.resize_n,self.resize_n))
+            ])
+        )
+        #weights = torchvision.models.resnet.ResNet50_Weights.DEFAULT
+
+        self.train_data = OxfordIIITPet(root=DIR, download=True, transform=self.train_transforms)
+        self.test_data = OxfordIIITPet(root=DIR, download=True,split="test", transform=self.test_transforms)
+        #self.raw_train_data, self.train_info = tfds.load(DATASET, split='train', shuffle_files=True, data_dir = f"{DIR}/tensorflow_datasets/", with_info=True)
+        #self.raw_test_data, self.test_info = tfds.load(DATASET, split='test', shuffle_files=True, data_dir = f"{DIR}/tensorflow_datasets/", with_info=True)
 
         #self.raw_train_data = tfds.as_numpy(self.raw_train_data)
         #self.raw_test_data = tfds.as_numpy(self.raw_test_data)
@@ -74,8 +92,8 @@ class Bowzer():
         #self.raw_test_data = self.ds['test']
 
 
-        self.train_data = preprocessDataset(self.raw_train_data,  weights.transforms())
-        self.test_data = preprocessDataset(self.raw_test_data,  weights.transforms())
+        #self.train_data = preprocessDataset(self.raw_train_data,  weights.transforms())
+        #self.test_data = preprocessDataset(self.raw_test_data,  weights.transforms())
         #self.train_data, self.val_data = train_test_split(self.train_data, test_size=0.2, random_state=0)
         self.dataloader_train = DataLoader(self.train_data, shuffle=True, batch_size=64)
         #self.dataloader_val = DataLoader(self.val_data, shuffle=True, batch_size=64)
@@ -83,7 +101,7 @@ class Bowzer():
 
     def train(self, epochs:int=3):
         #Define the model
-        self.net = Net(num_classes=self.num_classes)
+        self.net = Net(num_classes=self.num_classes, resize_n=self.resize_n)
         # Define the loss function
         criterion = nn.CrossEntropyLoss()
         # Define the optimizer
@@ -91,7 +109,7 @@ class Bowzer():
         for epoch in range(epochs):
             self.running_loss = 0.0
             # Iterate over training batches
-            for images, labels in tqdm(self.dataloader_train):
+            for images, labels in self.dataloader_train:
                 self.optimizer.zero_grad()
                 outputs = self.net(images)
                 loss = criterion(outputs, labels)
