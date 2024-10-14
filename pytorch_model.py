@@ -7,7 +7,6 @@ from torchmetrics import Precision, Recall
 import matplotlib.pyplot as plt
 from PIL import Image
 from typing import Dict, Literal
-from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 
 plt.rcParams["savefig.bbox"] = 'tight'
