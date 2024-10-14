@@ -1,66 +1,43 @@
 import torch
 import torch.nn as nn
-import torchvision
 from torchvision.datasets import OxfordIIITPet
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchmetrics import Precision, Recall
 import matplotlib.pyplot as plt
-#from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from sklearn.model_selection import train_test_split
-import tensorflow_datasets as tfds
-from tqdm import tqdm
-from torchvision.transforms import v2
-from torchvision.io import read_image
 from PIL import Image
 from typing import Dict, Literal
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
 
 plt.rcParams["savefig.bbox"] = 'tight'
 DIR ='/Volumes/KCQDrive/projects'
-DATASET = 'stanford_dogs'
-torch.manual_seed(1)
+
+torch.manual_seed(42)
+DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+print(f'Running on device: {DEVICE}')
+torch.device(DEVICE)
 
 class Net(nn.Module):
     def __init__(self, num_classes:int, resize_n:int):
         super().__init__()
-        # Define feature extractor
+        
         self.feature_extractor = nn.Sequential(
-            #input image: 3 * resize_n * resize_n
-           nn.Conv2d(3, resize_n//2, kernel_size=3, padding=1), #resize/2 output filters
-           #resize_n/2 * resize_n * resize_n
+           nn.Conv2d(3, resize_n//2, kernel_size=3, padding=1),
            nn.ELU(),
-           nn.MaxPool2d(kernel_size=2), #cut h and w in half
-           #resize_n/2 * resize_n/2 * resize_n/2
-           nn.Conv2d(resize_n//2, resize_n, kernel_size=3, padding=1), #resize_n output filters
-           #resize_n * resize_n/2 * resize_n/2
+           nn.MaxPool2d(kernel_size=2),
+           nn.Conv2d(resize_n//2, resize_n, kernel_size=3, padding=1),
            nn.ELU(),
-           nn.MaxPool2d(kernel_size=2), #cut h and w in half
-           #resize_n * (resize_n/2)/2 * (resize_n/2)/2
-           #resize_n * resize_n/4 * resize_n/4
+           nn.MaxPool2d(kernel_size=2),
            nn.Flatten(),
            )
-        # Define classifier
-        #resize_n * resize_n/4 * resize_n/4
+        
         self.classifier = nn.Linear(resize_n*(resize_n//4)*(resize_n//4), num_classes)
 
     def forward(self, x):
         x = self.feature_extractor(x)
         x = self.classifier(x)
         return x
-
-
-class preprocessDataset(torch.utils.data.Dataset):
-    def __init__(self, dataset, transform):
-        self.dataset = dataset
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.dataset)
-
-    def __getitem__(self, index):
-        image, target = self.dataset[index]
-        augmented_image = self.transform(image)
-        return augmented_image, target
     
 
 class Bowzer():
@@ -85,28 +62,10 @@ class Bowzer():
         )
         self.train_data = OxfordIIITPet(root=DIR, download=True, transform=self.train_transforms)
         self.test_data = OxfordIIITPet(root=DIR, download=True,split="test", transform=self.test_transforms)
-        
+        #extract num_classes
         self.num_classes = len(set(self.train_data._labels))
-        
-        #weights = torchvision.models.resnet.ResNet50_Weights.DEFAULT
-        #self.raw_train_data, self.train_info = tfds.load(DATASET, split='train', shuffle_files=True, data_dir = f"{DIR}/tensorflow_datasets/", with_info=True)
-        #self.raw_test_data, self.test_info = tfds.load(DATASET, split='test', shuffle_files=True, data_dir = f"{DIR}/tensorflow_datasets/", with_info=True)
-
-        #self.raw_train_data = tfds.as_numpy(self.raw_train_data)
-        #self.raw_test_data = tfds.as_numpy(self.raw_test_data)
-        #self.ds = tfds.data_source(DATASET, data_dir = f"{DIR}/tensorflow_datasets/", file_format='array_record', download=True)
-        #builder = tfds.builder(DATASET, file_format='array_record', download=True)
-        #builder.download_and_prepare()
-        #self.ds = builder.as_data_source()
-        #self.raw_train_data = self.ds['train']
-        #self.raw_test_data = self.ds['test']
-
-
-        #self.train_data = preprocessDataset(self.raw_train_data,  weights.transforms())
-        #self.test_data = preprocessDataset(self.raw_test_data,  weights.transforms())
-        #self.train_data, self.val_data = train_test_split(self.train_data, test_size=0.2, random_state=0)
+        #dataloaders
         self.dataloader_train = DataLoader(self.train_data, shuffle=True, batch_size=self.num_classes)
-        #self.dataloader_val = DataLoader(self.val_data, shuffle=True, batch_size=64)
         self.dataloader_test = DataLoader(self.test_data, shuffle=True, batch_size=self.num_classes)
 
     
@@ -133,6 +92,56 @@ class Bowzer():
                 self.running_loss += loss.item()
             epoch_loss = self.running_loss / len(self.dataloader_train)
             print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}")
+    
+    def train_epoch(self, epoc_idx, writer):
+        running_loss, last_loss = 0, 0
+        for i, data in enumerate(self.dataloader_train):
+            images, labels = data
+            self.optimizer.zero_grad()
+            outputs = self.net(images)
+            loss = self.criterion(outputs, labels)
+            loss.backward()
+            self.optimizer.step()
+            running_loss += loss.item()
+            if i % 1000 == 999:
+                last_loss = running_loss / 1000
+                print(f"batch {i + 1} loss: {last_loss}")
+                writer.add_scalar('Loss/Train', last_loss, (epoch_index * len(self.dataloader_train) + i + 1))
+                running_loss = 0
+        return last_loss
+
+    def train_eval(self, epochs:int = 5):
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        writer = SummaryWriter(f'{DIR}/bowzer/runs/trainer_{timestamp}')
+        best_loss = 1_000_000
+        #Define the model
+        self.net = Net(num_classes=self.num_classes, resize_n=self.resize_n)
+        # Define the loss function
+        self.criterion = nn.CrossEntropyLoss()
+        # Define the optimizer
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr = 0.001)
+        for epoch in range(epochs):
+            print(f"EPOCH {epoch + 1}:")
+            self.net.train(True)
+            avg_loss = self.train_epoch(epoch, writer)
+
+            running_loss = 0.0
+            self.net.eval()
+            with torch.no_grad():
+                for i, data in enumerate(self.dataloader_test):
+                    images, labels = data
+                    outputs = self.net(images)
+                    loss = self.criterion(outputs, labels)
+                    running_loss += loss
+            avg_test_loss = running_loss / (i + 1)
+            print(f"LOSS Train {avg_loss} Test: {avg_test_loss}")
+
+            writer.add_scalars('Training vs. Test Loss', {'Training': avg_loss, 'Test': avg_test_loss}, epoch + 1)
+            writer.flush()
+            if avg_test_loss < best_loss:
+                best_loss = avg_test_loss
+                torch.save(self.net.state_dict(), f'{DIR}/bowzer/runs/trainer_{timestamp}/model_{timestamp}_{epoch}')
+
 
 def evaluate(model, num_classes, dataloader_test, average: Literal['macro','micro','weighted',None]):
     metric_precision = Precision(
