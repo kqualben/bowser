@@ -40,33 +40,35 @@ class Net(nn.Module):
     
 
 class Bowzer():
-    def __init__(self, resize_n:int = 64):
+    def __init__(self, resize_n:int = 128):
         self.timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         self.resize_n = resize_n
         self.train_transforms = (
             transforms
             .Compose([
                 transforms.RandomHorizontalFlip(),
+                #transforms.RandomAutocontrast(),
                 transforms.RandomRotation(45),
-                transforms.RandomAutocontrast(),
                 transforms.ToTensor(),
-                transforms.Resize((self.resize_n,self.resize_n))
+                transforms.Resize((self.resize_n,self.resize_n), antialias=True),
+                #transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ])
         )
         self.test_transforms = (
             transforms
             .Compose([
                 transforms.ToTensor(),
-                transforms.Resize((self.resize_n,self.resize_n))
+                transforms.Resize((self.resize_n,self.resize_n)),
+                #transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
             ])
         )
         self.train_data = OxfordIIITPet(root=DIR, download=True, transform=self.train_transforms)
-        self.test_data = OxfordIIITPet(root=DIR, download=True,split="test", transform=self.test_transforms)
+        self.test_data = OxfordIIITPet(root=DIR, download=True, split="test", transform=self.test_transforms)
         #extract num_classes
         self.num_classes = len(set(self.train_data._labels))
         #dataloaders
-        self.dataloader_train = DataLoader(self.train_data, shuffle=True, batch_size=self.num_classes)
-        self.dataloader_test = DataLoader(self.test_data, shuffle=True, batch_size=self.num_classes)
+        self.dataloader_train = DataLoader(self.train_data, shuffle=True, batch_size=16, pin_memory=True)
+        self.dataloader_test = DataLoader(self.test_data, shuffle=True, batch_size=16, pin_memory=True)
 
         self.writer_ = None
         self.writer_path = f'{DIR}/bowzer/runs/trainer_{self.timestamp}'
@@ -100,7 +102,7 @@ class Bowzer():
             epoch_loss = self.running_loss / len(self.dataloader_train)
             print(f"Epoch {epoch+1}, Loss: {epoch_loss:.4f}")
     
-    def train_epoch(self, epoc_idx):
+    def train_epoch(self, epoch_index):
         running_loss, last_loss = 0, 0
         for i, data in enumerate(self.dataloader_train):
             images, labels = data
@@ -119,6 +121,7 @@ class Bowzer():
 
     def train_eval(self, epochs:int = 5):
         best_loss = 1_000_000
+        counter = 0
         #Define the model
         self.net = Net(num_classes=self.num_classes, resize_n=self.resize_n)
         # Define the loss function
@@ -126,9 +129,9 @@ class Bowzer():
         # Define the optimizer
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr = 0.001)
         for epoch in range(epochs):
-            print(f"EPOCH {epoch + 1}:")
+            print(f"EPOCH {counter + 1}:")
             self.net.train(True)
-            avg_loss = self.train_epoch(epoch)
+            avg_loss = self.train_epoch(counter)
 
             running_loss = 0.0
             self.net.eval()
@@ -141,11 +144,12 @@ class Bowzer():
             avg_test_loss = running_loss / (i + 1)
             print(f"LOSS Train {avg_loss} Test: {avg_test_loss}")
 
-            self.writer.add_scalars('Training vs. Test Loss', {'Training': avg_loss, 'Test': avg_test_loss}, epoch + 1)
+            self.writer.add_scalars('Training vs. Test Loss', {'Training': avg_loss, 'Test': avg_test_loss}, counter + 1)
             self.writer.flush()
             if avg_test_loss < best_loss:
                 best_loss = avg_test_loss
-                torch.save(self.net.state_dict(), f'{DIR}/bowzer/runs/trainer_{self.timestamp}/model_{self.timestamp}_{epoch}')
+                torch.save(self.net.state_dict(), f'{DIR}/bowzer/runs/trainer_{self.timestamp}/model_{self.timestamp}_{counter}')
+            counter += 1
 
 
 def evaluate(model, num_classes, dataloader_test, average: Literal['macro','micro','weighted',None]):
