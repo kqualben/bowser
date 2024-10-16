@@ -37,7 +37,6 @@ class Net(nn.Module):
         x = self.feature_extractor(x)
         x = self.classifier(x)
         return x
-    
 
 class Bowzer():
     def __init__(self, resize_n:int = 128):
