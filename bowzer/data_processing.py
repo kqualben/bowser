@@ -27,23 +27,21 @@ class Dataset():
         self.train_transforms = (
             transforms
             .Compose([
+                transforms.Resize((self.resize_n,self.resize_n)),
                 transforms.RandomHorizontalFlip(),
-                #transforms.RandomAutocontrast(),
                 transforms.RandomRotation(45),
                 transforms.ToTensor(),
-                transforms.Resize((self.resize_n,self.resize_n), antialias=True),
-                #transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
         )
         self.test_transforms = (
             transforms
             .Compose([
-                transforms.ToTensor(),
                 transforms.Resize((self.resize_n,self.resize_n)),
-                #transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
         )
-        self._num_classes = None
         self._train_set = None
         self._test_set = None
 
@@ -69,7 +67,6 @@ class Dataset():
 
     def process(self) -> Tuple:
         train = self._dataloader(self.train_set)
-        self.num_classes = len(set(self.train_set._labels))
         test = self._dataloader(self.test_set)
         return train, test
 
