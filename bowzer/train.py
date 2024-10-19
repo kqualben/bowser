@@ -27,7 +27,7 @@ class BowzerClassifier():
 
     def view_sample_transformations(self, breeds:List[str] = ['Beagle', 'German Shorthaired', 'Chihuahua'], save_images:bool = False) -> None:
         _paths = self.data_module.get_breed_image(breeds)
-        self.data_module.show_training_images(_paths, save=save_images)
+        self.data_module.show_image_transforms(_paths, save=save_images)
 
     def train_epoch(self, idx: int, model, dataloader_train, optimizer, loss_fn) -> Tuple[List, List]:
         loss_list = []

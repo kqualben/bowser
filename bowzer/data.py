@@ -111,17 +111,18 @@ class Transform(OxfordIIITPet):
                 counter += 1
         return paths
 
-    def show_training_images(self, breed_images: Dict[str,str], save: bool = False) -> None:
-        for i, (dog, img) in enumerate(breed_images.items()):
+    def show_image_transforms(self, image_paths: Dict[str,str], train: bool = True, save: bool = False) -> None:
+        transformer = self.train_transforms if train else self.test_transforms
+        for name, img in image_paths.items():
             fig, axes = plt.subplots(ncols=2, squeeze=True)
             img = open_image(img)
             axes[0].imshow(np.asarray(img))
-            axes[1].imshow(self.train_transforms(img).squeeze(0).permute(1,2,0))
-            axes[0].set_title(f'{dog}', size = 'medium')
+            axes[1].imshow(transformer(img).squeeze(0).permute(1,2,0))
+            axes[0].set_title(f'{name}', size = 'medium')
             axes[1].set_title('Transformed', size = 'medium')
             fig.tight_layout()
             if save:
-                path = f"/tmp/{dog.replace(' ','_').lower()}_transform.png"
+                path = f"/tmp/{name.replace(' ','_').lower()}_{'train' if train else 'test'}_transform.png"
                 plt.savefig(path)
                 self.saved_images.append(path)
             plt.show()
