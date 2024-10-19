@@ -80,11 +80,13 @@ class BowzerClassifier():
             correct += [(preds == labels).sum().item()]
             metric_precision(preds, labels)
             metric_recall(preds, labels)
-        performance['precision'] = metric_precision.compute()
-        performance['recall'] = metric_recall.compute()
+        performance['precision'] = metric_precision.compute().item()
+        performance['recall'] = metric_recall.compute().item()
+        performance['total'] = total
+        performance['correct'] = correct
 
-        print(f"Accuracy [correct: {correct}, total: {total}]")
+        print(f"Accuracy [correct: {sum(performance['total'])}, total: {sum(performance['correct'])}]")
         print(f"Precision: {performance['precision']}")
         print(f"Recall: {performance['recall']}")
-        torch.save(model.state_dict(), f"{self.model_path}/model_{self.run_time.strftime('%H%M%S')}")
+        torch.save(model.state_dict(), f"{self.model_path}/model_{self.run_time.strftime('%H%M%S')}_final")
         return performance
