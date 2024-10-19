@@ -39,6 +39,7 @@ class Transform(OxfordIIITPet):
                 transforms.Resize((self.resize_n,self.resize_n), antialias=True),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomRotation(45),
+                transforms.RandomGrayscale(p=0.5),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
