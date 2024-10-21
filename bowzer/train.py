@@ -16,7 +16,7 @@ torch.manual_seed(SEED)
 DEVICE = ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 print(f'Running on device: {DEVICE}')
 
-class BowzerClassifier():
+class BowzerClassifier:
     def __init__(self, resize_n: int):
         self.resize_n = resize_n
         self.data_module = Transform(self.resize_n)
