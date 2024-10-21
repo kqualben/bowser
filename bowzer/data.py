@@ -1,11 +1,12 @@
 import torch
 from torchvision import transforms
-from torchvision.datasets import OxfordIIITPet
+from torchvision.datasets import OxfordIIITPet, ImageFolder
 from torch.utils.data import DataLoader, Dataset
 from typing import Tuple, Callable, List, Dict
 import matplotlib.pyplot as plt
 import numpy as np
 
+import tensorflow_datasets as tfds
 from .utils import (
     open_image
 )
@@ -21,7 +22,7 @@ from .constants import (
 plt.rcParams["savefig.bbox"] = 'tight'
 torch.manual_seed(SEED)
 
-class Transform(OxfordIIITPet):
+class Transform:
     """
     Load and Transform OxfordIIITPet
 
@@ -54,11 +55,16 @@ class Transform(OxfordIIITPet):
         )
         self._train_set = None
         self._test_set = None
+        self._class_dict = None
         self.saved_images = []
 
     @staticmethod
-    def _load_transform(transform:torch.Tensor, **kwargs) -> Dataset:
-        dataset = OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
+    def _load_transform(transform:torch.Tensor, oxford:bool = True, **kwargs) -> Dataset:
+        if oxford:
+            dataset = OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
+        else:
+            tf_ds = tfds.load('stanford_dogs', data_dir=DIR)
+            dataset = ImageFolder(f"{DIR}/stanford_dogs", transform=transform, **kwargs)
         return dataset
     
     @property
@@ -72,6 +78,16 @@ class Transform(OxfordIIITPet):
         if self._test_set is None:
             self._test_set = self._load_transform(self.test_transforms, split = 'test')
         return self._test_set
+    
+    @property
+    def class_dict(self) -> Dict:
+        if self._class_dict is None:
+            self._class_dict = self.train_set.class_to_idx
+        return self._class_dict
+    
+    @property
+    def idx_dict(self) -> Dict:
+        return {j:k for k,j in self.class_dict.items()}
 
     @staticmethod
     def _dataloader(data: Dataset, **kwargs) -> Callable:
@@ -95,9 +111,14 @@ class Transform(OxfordIIITPet):
     def train_image_paths(self) -> List:
         return self.train_set._images
     
+    def get_label_idx(self, label:str) -> int:
+        return self.class_dict[label]
+    
+    def get_idx_label(self, idx:int) -> str:
+        return self.idx_dict[idx]
+    
     def get_dog_names(self) -> List[str]:
-        classes = self.train_set.classes
-        return [x for x in classes if x not in list(CAT_CLASSES.keys())]
+        return [x for x in self.train_set.classes if x not in list(CAT_CLASSES.keys())]
 
     def get_breed_image(self, breeds: List[str]) -> Dict[str,str]:
         paths = {}
