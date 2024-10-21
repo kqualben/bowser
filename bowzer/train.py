@@ -2,8 +2,6 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torchmetrics import Precision, Recall
 from typing import Dict, List, Tuple
-from datetime import datetime
-
 from .model import BowzerNet
 from .data import Transform
 import os
