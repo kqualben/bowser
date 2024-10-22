@@ -40,7 +40,6 @@ class Transform:
                 transforms.Resize((self.resize_n,self.resize_n), antialias=True),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomRotation(45),
-                transforms.RandomGrayscale(p=0.5),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
@@ -59,13 +58,8 @@ class Transform:
         self.saved_images = []
 
     @staticmethod
-    def _load_transform(transform:torch.Tensor, oxford:bool = True, **kwargs) -> Dataset:
-        if oxford:
-            dataset = OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
-        else:
-            tf_ds = tfds.load('stanford_dogs', data_dir=DIR)
-            dataset = ImageFolder(f"{DIR}/stanford_dogs", transform=transform, **kwargs)
-        return dataset
+    def _load_transform(transform: torch.Tensor, **kwargs) -> Dataset:
+        return OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
     
     @property
     def train_set(self) -> Dataset:
