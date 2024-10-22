@@ -4,6 +4,7 @@ from torchmetrics import Precision, Recall
 from typing import Dict, List, Tuple
 from .model import BowzerNet
 from .data import Transform
+from .utils import save_json
 import os
 from contextlib import suppress
 from datetime import datetime
@@ -45,7 +46,7 @@ class BowzerClassifier:
                 torch.save(model.state_dict(), f"{self.model_path}/model_{self.run_time.strftime('%H%M%S')}_{idx}_{batch}")  
         avg_loss = running_loss / (batch + 1)
         return avg_loss, loss_list
-
+    
     def train_eval(self, epochs: int) -> Dict:
         self.run_time = datetime.now()
         self.model_path = f"{DIR}/bowzer/runs/trainer_{self.run_time.strftime('%Y%m%d')}"
@@ -87,4 +88,5 @@ class BowzerClassifier:
         print(f"Precision: {performance['precision']}")
         print(f"Recall: {performance['recall']}")
         torch.save(model.state_dict(), f"{self.model_path}/model_{self.run_time.strftime('%H%M%S')}_final")
+        save_json(performance, directory=f"{self.model_path}/", filename=f"model_{self.run_time.strftime('%H%M%S')}_performance.json")
         return performance
