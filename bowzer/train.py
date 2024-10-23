@@ -7,7 +7,7 @@ from .data import Transform
 import os
 from contextlib import suppress
 from datetime import datetime
-from .constants import DIR, SEED
+from .constants import SEED
 from .utils import save_json, logger
 
 torch.manual_seed(SEED)
@@ -36,7 +36,13 @@ class BowzerClassifier:
         self.data_module.show_image_transforms(_paths, save=save_images)
 
     def train_epoch(
-        self, idx: int, model, dataloader_train, optimizer, loss_fn
+        self,
+        idx: int,
+        model,
+        dataloader_train,
+        optimizer,
+        loss_fn,
+        save_batch_model: bool = False,
     ) -> Tuple[List, List]:
         loss_list = []
         running_loss = 0.0
@@ -54,25 +60,27 @@ class BowzerClassifier:
                 self.logger.info(
                     f"loss: {loss.item():>7f}  [{(batch + 1) * len(images):>5d}/{len(dataloader_train.dataset):>5d}]"
                 )
-                torch.save(
-                    model.state_dict(),
-                    f"{self.model_path}/model_{self.run_time.strftime('%H%M%S')}_{idx}_{batch}",
-                )
+                if save_batch_model:
+                    torch.save(
+                        model.state_dict(),
+                        f"{self.batch_path}/model_{idx+1}_{batch}",
+                    )
         avg_loss = running_loss / (batch + 1)
         return avg_loss, loss_list
 
-    def train_eval(self, epochs: int) -> str:
+    def train_eval(self, epochs: int, save_batch_models: bool = False) -> str:
         self.run_time = datetime.now()
-        self.model_path = (
-            f"{DIR}/bowzer/runs/trainer_{self.run_time.strftime('%Y%m%d')}"
-        )
+        self.batch_path = f"model_store/trained_{self.run_time.strftime('%Y%m%d')}/model_{self.run_time.strftime('%H%M%S')}"
+        if save_batch_models:
+            self.batch_path += "/batches"
+        with suppress(FileExistsError):
+            os.makedirs(self.batch_path)
+
+        self.model_path = self.batch_path.replace("/batches", "")
         self.logger = logger(
             directory=self.model_path,
-            filename=f"model_{self.run_time.strftime('%H%M%S')}.log",
+            filename=f"training_log.log",
         )
-
-        with suppress(FileExistsError):
-            os.mkdir(self.model_path)
         self.logger.info(f"Model Results will be saved to: {self.model_path}")
 
         num_classes = len(self.dataloader_train.dataset.classes)
@@ -85,7 +93,12 @@ class BowzerClassifier:
         for n in range(epochs):
             self.logger.info(f"EPOCH {n + 1}:")
             avg_loss, loss_list = self.train_epoch(
-                n, model, self.dataloader_train, optimizer, loss_fn
+                n,
+                model,
+                self.dataloader_train,
+                optimizer,
+                loss_fn,
+                save_batch_model=save_batch_models,
             )
             performance[f"epoch_{n}"] = {"avg_loss": avg_loss, "loss_list": loss_list}
 
@@ -98,9 +111,12 @@ class BowzerClassifier:
         ).to(DEVICE)
         model.eval()
         total, correct = [], []
+        val_losses = []
         for images, labels in self.dataloader_test:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             output = model(images)
+            val_loss = loss_fn(output, labels)
+            val_losses.append(val_loss.item())
             _, preds = torch.max(output.data, 1)
             total += [labels.size(0)]
             correct += [(preds == labels).sum().item()]
@@ -110,19 +126,21 @@ class BowzerClassifier:
         performance["recall"] = metric_recall.compute().item()
         performance["total"] = total
         performance["correct"] = correct
+        performance["val_losses"] = val_losses
 
         self.logger.info(
-            f"Accuracy [correct: {sum(performance['total'])}, total: {sum(performance['correct'])}]"
+            f"Accuracy  {100 * sum(performance['correct']) / sum(performance['total']):.2f}% [correct: {sum(performance['correct'])}, total: {sum(performance['total'])}]"
         )
         self.logger.info(f"Precision: {performance['precision']}")
         self.logger.info(f"Recall: {performance['recall']}")
         torch.save(
             model.state_dict(),
-            f"{self.model_path}/model_{self.run_time.strftime('%H%M%S')}_final",
+            f"{self.model_path}/model_epochs_{epochs}",
         )
         performance_path = save_json(
             performance,
             directory=f"{self.model_path}/",
-            filename=f"model_{self.run_time.strftime('%H%M%S')}_performance.json",
+            filename=f"model_epochs_{epochs}_performance.json",
         )
+        self.logger.handlers.clear()
         return performance_path
