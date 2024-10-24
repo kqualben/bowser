@@ -5,13 +5,37 @@ from torch.utils.data import DataLoader, Dataset
 from typing import Tuple, Callable, List, Dict
 import matplotlib.pyplot as plt
 import numpy as np
-
+import os
 from .utils import open_image
 
 from .constants import DIR, SEED, PIN_MEMORY, BATCH_SIZE, CAT_CLASSES
 
 plt.rcParams["savefig.bbox"] = "tight"
 torch.manual_seed(SEED)
+
+
+class CustomOxfordIIITPet(OxfordIIITPet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.image_paths = []
+        self.labels = []
+
+        for img_name, label in zip(self._images, self._labels):
+            img_path = os.path.join(
+                self.root, "images", img_name
+            )  # Adjust this based on actual path
+            self.image_paths.append(img_path)
+            self.labels.append(label)
+
+    def __getitem__(self, index):
+        # Get the original image and label
+        image, label = super().__getitem__(index)
+        image_path = self.image_paths[index]  # Get the corresponding image path
+        return image, label, image_path  # Return image, label, and image path
+
+    def __len__(self):
+        return len(self.image_paths)  # Return the total number of images
 
 
 class Transform:
@@ -55,7 +79,10 @@ class Transform:
 
     @staticmethod
     def _load_transform(transform: torch.Tensor, **kwargs) -> Dataset:
-        return OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
+        # return OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
+        return CustomOxfordIIITPet(
+            root=DIR, download=True, transform=transform, **kwargs
+        )
 
     @property
     def train_set(self) -> Dataset:
