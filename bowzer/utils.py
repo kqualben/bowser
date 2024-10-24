@@ -1,8 +1,9 @@
-from PIL import Image
-import logging
 import json
+import logging
 import os
 from typing import Dict
+
+from PIL import Image
 
 
 def open_image(image_path: str) -> Image:

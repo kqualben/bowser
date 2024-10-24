@@ -1,14 +1,16 @@
-import torch
-from torch.nn import CrossEntropyLoss
-from torchmetrics import Precision, Recall
-from typing import Dict, List, Tuple
-from .model import BowzerNet
-from .data import Transform
 import os
 from contextlib import suppress
 from datetime import datetime
+from typing import Dict, List, Tuple
+
+import torch
+from torch.nn import CrossEntropyLoss
+from torchmetrics import Precision, Recall
+
 from .constants import SEED
-from .utils import save_json, logger
+from .data import Transform
+from .model import BowzerNet
+from .utils import logger, save_json
 
 torch.manual_seed(SEED)
 

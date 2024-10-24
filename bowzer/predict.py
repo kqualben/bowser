@@ -1,12 +1,14 @@
+from typing import Dict, List, Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
+from sklearn.metrics.pairwise import cosine_similarity
+
+from .constants import RESIZE_N, SEED
 from .data import Transform
 from .model import BowzerNet
 from .utils import open_image
-from typing import List, Dict, Tuple
-from .constants import RESIZE_N, SEED
-import matplotlib.pyplot as plt
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
 plt.rcParams["savefig.bbox"] = "tight"
 torch.manual_seed(SEED)

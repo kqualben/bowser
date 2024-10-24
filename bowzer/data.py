@@ -1,14 +1,15 @@
-import torch
-from torchvision import transforms
-from torchvision.datasets import OxfordIIITPet, ImageFolder
-from torch.utils.data import DataLoader, Dataset
-from typing import Tuple, Callable, List, Dict
+import os
+from typing import Callable, Dict, List, Tuple
+
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-from .utils import open_image
+import torch
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
+from torchvision.datasets import ImageFolder, OxfordIIITPet
 
-from .constants import DIR, SEED, PIN_MEMORY, BATCH_SIZE, CAT_CLASSES
+from .constants import BATCH_SIZE, CAT_CLASSES, DIR, PIN_MEMORY, SEED
+from .utils import open_image
 
 plt.rcParams["savefig.bbox"] = "tight"
 torch.manual_seed(SEED)
