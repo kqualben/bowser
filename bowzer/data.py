@@ -6,13 +6,13 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
-from torchvision.datasets import ImageFolder, OxfordIIITPet
+from torchvision.datasets import OxfordIIITPet
 
 from .constants import BATCH_SIZE, CAT_CLASSES, DIR, PIN_MEMORY, SEED
 from .utils import open_image
 
 plt.rcParams["savefig.bbox"] = "tight"
-torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
 
 
 class CustomOxfordIIITPet(OxfordIIITPet):
@@ -23,20 +23,17 @@ class CustomOxfordIIITPet(OxfordIIITPet):
         self.labels = []
 
         for img_name, label in zip(self._images, self._labels):
-            img_path = os.path.join(
-                self.root, "images", img_name
-            )  # Adjust this based on actual path
+            img_path = os.path.join(self.root, "images", img_name)
             self.image_paths.append(img_path)
             self.labels.append(label)
 
     def __getitem__(self, index):
-        # Get the original image and label
         image, label = super().__getitem__(index)
-        image_path = self.image_paths[index]  # Get the corresponding image path
-        return image, label, image_path  # Return image, label, and image path
+        image_path = self.image_paths[index]
+        return image, label, image_path
 
     def __len__(self):
-        return len(self.image_paths)  # Return the total number of images
+        return len(self.image_paths)
 
 
 class Transform:
@@ -80,7 +77,6 @@ class Transform:
 
     @staticmethod
     def _load_transform(transform: torch.Tensor, **kwargs) -> Dataset:
-        # return OxfordIIITPet(root=DIR, download=True, transform=transform, **kwargs)
         return CustomOxfordIIITPet(
             root=DIR, download=True, transform=transform, **kwargs
         )
@@ -113,30 +109,9 @@ class Transform:
             data, shuffle=True, batch_size=BATCH_SIZE, pin_memory=PIN_MEMORY, **kwargs
         )
 
-    @staticmethod
-    def _custom_collate_fn(batch: int, drop_class_labels: List[str]) -> Tuple:
-        filtered_batch = [
-            (img, label) for img, label in batch if label not in drop_class_labels
-        ]
-        return zip(*filtered_batch) if filtered_batch else ([], [])
-
-    def process(self, ignore_cats: bool = False) -> Tuple[Callable, Callable]:
-        if ignore_cats:
-            train = self._dataloader(
-                self.train_set,
-                collate_fn=lambda x: self._custom_collate_fn(
-                    x, list(CAT_CLASSES.keys())
-                ),
-            )
-            test = self._dataloader(
-                self.test_set,
-                collate_fn=lambda x: self._custom_collate_fn(
-                    x, list(CAT_CLASSES.keys())
-                ),
-            )
-        else:
-            train = self._dataloader(self.train_set)
-            test = self._dataloader(self.test_set)
+    def process(self) -> Tuple[Callable, Callable]:
+        train = self._dataloader(self.train_set)
+        test = self._dataloader(self.test_set)
         return train, test
 
     @property

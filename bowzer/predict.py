@@ -11,7 +11,6 @@ from .model import BowzerNet
 from .utils import open_image
 
 plt.rcParams["savefig.bbox"] = "tight"
-torch.manual_seed(SEED)
 
 DEVICE = (
     "cuda"
@@ -19,10 +18,11 @@ DEVICE = (
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
 
+torch.cuda.manual_seed_all(SEED)
+
 
 class DataProcessing:
     def __init__(self):
-        print(f"Running on device: {DEVICE}")
         self.data_module = Transform(RESIZE_N)
         self.dataloader_train, self.dataloader_test = self.data_module.process()
         self.num_classes = len(self.dataloader_train.dataset.classes)
@@ -30,6 +30,7 @@ class DataProcessing:
 
 class Predictor(DataProcessing):
     def __init__(self, model_path: str):
+        print(f"Running on device: {DEVICE}")
         super().__init__()
         self.model_path = model_path
         self.model_name = self.model_path.split("/")[-1]

@@ -12,13 +12,14 @@ from .data import Transform
 from .model import BowzerNet
 from .utils import logger, save_json
 
-torch.manual_seed(SEED)
 
 DEVICE = (
     "cuda"
     if torch.cuda.is_available()
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
+
+torch.cuda.manual_seed_all(SEED)
 
 
 class BowzerClassifier:
