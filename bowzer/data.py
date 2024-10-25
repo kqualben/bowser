@@ -8,11 +8,10 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import OxfordIIITPet
 
-from .constants import BATCH_SIZE, CAT_CLASSES, DIR, PIN_MEMORY, SEED
+from .constants import BATCH_SIZE, CAT_CLASSES, DIR, PIN_MEMORY
 from .utils import open_image
 
 plt.rcParams["savefig.bbox"] = "tight"
-torch.cuda.manual_seed_all(SEED)
 
 
 class CustomOxfordIIITPet(OxfordIIITPet):

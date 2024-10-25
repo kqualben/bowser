@@ -18,7 +18,10 @@ DEVICE = (
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
 
+torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 
 class DataProcessing:

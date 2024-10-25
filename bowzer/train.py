@@ -19,7 +19,10 @@ DEVICE = (
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
 
+torch.manual_seed(SEED)
 torch.cuda.manual_seed_all(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 
 class BowzerClassifier:
@@ -50,7 +53,7 @@ class BowzerClassifier:
         loss_list = []
         running_loss = 0.0
         model.train()
-        for batch, (images, labels) in enumerate(dataloader_train):
+        for batch, (images, labels, image_paths) in enumerate(dataloader_train):
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             optimizer.zero_grad()
             preds = model(images)
@@ -115,7 +118,7 @@ class BowzerClassifier:
         model.eval()
         total, correct = [], []
         val_losses = []
-        for images, labels in self.dataloader_test:
+        for images, labels, image_paths in self.dataloader_test:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             output = model(images)
             val_loss = loss_fn(output, labels)
