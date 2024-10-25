@@ -1,14 +1,13 @@
 import os
 from typing import Callable, Dict, List, Tuple
-
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 from torchvision.datasets import OxfordIIITPet
 
-from .constants import BATCH_SIZE, CAT_CLASSES, DIR, PIN_MEMORY
+from .config import ModelSettings
+from .constants import CAT_CLASSES, DIR, PIN_MEMORY
 from .utils import open_image
 
 plt.rcParams["savefig.bbox"] = "tight"
@@ -39,36 +38,18 @@ class Transform:
     """
     Load and Transform OxfordIIITPet
 
-    :param resize_n: integer to resize images
+    :param model_settings: ModelSettings dataclass
 
     :ivar train_transforms:
     :ivar test_transforms:
     :ivar saved_images:
     """
 
-    def __init__(self, resize_n: int):
-        self.resize_n = resize_n
-        self.train_transforms = transforms.Compose(
-            [
-                transforms.Resize((self.resize_n, self.resize_n), antialias=True),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomRotation(45),
-                transforms.RandomGrayscale(0.50),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
-        self.test_transforms = transforms.Compose(
-            [
-                transforms.Resize((self.resize_n, self.resize_n), antialias=True),
-                transforms.ToTensor(),
-                transforms.Normalize(
-                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-                ),
-            ]
-        )
+    def __init__(self, model_settings: ModelSettings):
+        print(f"Model Settings Info: {model_settings.info}")
+        self.model_settings = model_settings
+        self.train_transforms = self.model_settings.train_transform
+        self.test_transforms = self.model_settings.test_transform
         self._train_set = None
         self._test_set = None
         self._class_dict = None
@@ -102,10 +83,13 @@ class Transform:
     def idx_dict(self) -> Dict:
         return {j: k for k, j in self.class_dict.items()}
 
-    @staticmethod
-    def _dataloader(data: Dataset, **kwargs) -> Callable:
+    def _dataloader(self, data: Dataset, **kwargs) -> Callable:
         return DataLoader(
-            data, shuffle=True, batch_size=BATCH_SIZE, pin_memory=PIN_MEMORY, **kwargs
+            data,
+            shuffle=True,
+            batch_size=self.model_settings.batch_size,
+            pin_memory=PIN_MEMORY,
+            **kwargs,
         )
 
     def process(self) -> Tuple[Callable, Callable]:

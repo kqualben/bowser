@@ -2,11 +2,11 @@ import os
 from contextlib import suppress
 from datetime import datetime
 from typing import Dict, List, Tuple
-
 import torch
 from torch.nn import CrossEntropyLoss
 from torchmetrics import Precision, Recall
 
+from .config import ModelSettings
 from .constants import SEED
 from .data import Transform
 from .model import BowzerNet
@@ -26,10 +26,10 @@ torch.backends.cudnn.benchmark = False
 
 
 class BowzerClassifier:
-    def __init__(self, resize_n: int):
+    def __init__(self, model_settings: ModelSettings):
         print(f"Running on device: {DEVICE}")
-        self.resize_n = resize_n
-        self.data_module = Transform(self.resize_n)
+        self.epochs = model_settings.epochs
+        self.data_module = Transform(model_settings)
         self.dataloader_train, self.dataloader_test = self.data_module.process()
         self.dog_names = self.data_module.get_dog_names()
 
@@ -86,7 +86,6 @@ class BowzerClassifier:
 
     def train_eval(
         self,
-        epochs: int,
         save_batch_models: bool = False,
         save_loss_lists: bool = False,
     ) -> Dict:
@@ -109,9 +108,9 @@ class BowzerClassifier:
         self.loss_fn = CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
 
-        self.logger.info(f"Training {epochs} epochs...")
+        self.logger.info(f"Training {self.epochs} epochs...")
         performance = {}
-        for n in range(epochs):
+        for n in range(self.epochs):
             self.logger.info(f"EPOCH {n + 1}:")
             avg_loss, avg_val_loss, loss_list, val_losses = self.train_epoch(
                 n,
@@ -155,12 +154,12 @@ class BowzerClassifier:
         self.logger.info(f"Recall: {performance['recall']}")
         torch.save(
             self.model.state_dict(),
-            f"{self.model_path}/model_epochs_{epochs}",
+            f"{self.model_path}/model_epochs_{self.epochs}",
         )
         performance_path = save_json(
             performance,
             directory=f"{self.model_path}/",
-            filename=f"model_epochs_{epochs}_performance.json",
+            filename=f"model_epochs_{self.epochs}_performance.json",
         )
         self.logger.handlers.clear()
         return performance_path
