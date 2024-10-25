@@ -53,7 +53,7 @@ def get_models(
     return models
 
 
-def get_target_image_dict(root: str = "./images/testing/") -> Dict[str, dict]:
+def get_target_image_dict(root: str = "./images/targets/") -> Dict[str, dict]:
     image_dict = {name: [] for name in os.listdir(root)}
     for folder in image_dict:
         image_dict[folder] = {

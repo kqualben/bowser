@@ -32,12 +32,14 @@ class Predictor(DataProcessing):
     def __init__(self, model_path: str):
         super().__init__()
         self.model_path = model_path
+        self.model_name = self.model_path.split("/")[-1]
         self.model = BowzerNet(self.num_classes).to(DEVICE)
         self.model.load_state_dict(torch.load(self.model_path, weights_only=False))
         self.train_embeddings, self.train_batch_labels, self.train_batch_image_paths = (
             self.get_embeddings_labels(self.model, self.dataloader_train)
         )
         self.saved_images = []
+        self.target_label = None
 
     @staticmethod
     def get_embeddings_labels(model, dataloader) -> Tuple[np.ndarray, List]:
@@ -144,7 +146,10 @@ class Predictor(DataProcessing):
         )
         target_image = open_image(self.target_image_path)
         axes[0].imshow(np.asarray(target_image))
-        axes[0].set_title(f"Target", size="medium")
+        axes[0].set_title(
+            f"{'Target' if self.target_label is None else self.target_label}",
+            size="medium",
+        )
         axes[0].axis("off")
         for i, (breed_name, path) in enumerate(top_n_breeds_info):
             pred_image = open_image(path)
@@ -154,9 +159,28 @@ class Predictor(DataProcessing):
                 f"{i+1}: {breed_name}",
                 size="medium",
             )
+
+        fig.suptitle(self.model_name)
         fig.tight_layout()
         if save:
-            path = f"/tmp/{self.target_image_path.split('/')[-1].split('.')[0]}_top_{top_n_breeds}_matches.png"
+            path = self.target_image_path.replace("targets", "predictions").replace(
+                ".jpg",
+                f"_top_{top_n_breeds}_breeds_{'_'.join(self.model_name.split('_')[::-1][:2])}.jpg",
+            )
             plt.savefig(path)
             self.saved_images.append(path)
         plt.show()
+
+    def target_image_dict_loop(
+        self,
+        image_dict: Dict,
+        top_n_breeds: int = 5,
+        save: bool = False,
+    ) -> None:
+        for character in image_dict:
+            print(f"Predicting {character} images...")
+            char_images = image_dict[character]
+            for image in char_images:
+                self.target_label = character.title()
+                self.predict(char_images[image])
+                self.show_predicted_images(top_n_breeds=top_n_breeds, save=save)
