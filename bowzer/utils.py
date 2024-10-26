@@ -6,6 +6,7 @@ from typing import Dict, Literal
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
 
 
 def open_image(image_path: str) -> Image:
@@ -24,6 +25,21 @@ def open_json(path: str) -> Dict:
     print(f"Loading: {path}")
     with open(path, "r") as f:
         data = json.load(f)
+    return data
+
+
+def save_pickle(data: dict, directory: str, filename: str) -> str:
+    location = os.path.join(directory, filename)
+    with open(location, "wb") as f:
+        pickle.dump(data, f)
+    print(f"File saved to: {location}")
+    return location
+
+
+def open_pickle(path: str) -> Dict:
+    print(f"Loading: {path}")
+    with open(path, "rb") as f:
+        data = pickle.load(f)
     return data
 
 
