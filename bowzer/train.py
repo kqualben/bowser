@@ -10,7 +10,7 @@ from .config import ModelSettings
 from .constants import SEED
 from .data import Transform
 from .model import BowzerNet
-from .utils import logger, save_json
+from .utils import logger, save_json, save_pickle
 
 
 DEVICE = (
@@ -28,8 +28,10 @@ torch.backends.cudnn.benchmark = False
 class BowzerClassifier:
     def __init__(self, model_settings: ModelSettings):
         print(f"Running on device: {DEVICE}")
-        self.epochs = model_settings.epochs
-        self.data_module = Transform(model_settings)
+        self.model_settings = model_settings
+        self.epochs = self.model_settings.epochs
+        self.lr = self.model_settings.learning_rate
+        self.data_module = Transform(self.model_settings)
         self.dataloader_train, self.dataloader_test = self.data_module.process()
         self.dog_names = self.data_module.get_dog_names()
 
@@ -106,9 +108,9 @@ class BowzerClassifier:
         num_classes = len(self.dataloader_train.dataset.classes)
         self.model = BowzerNet(num_classes).to(DEVICE)
         self.loss_fn = CrossEntropyLoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
-        self.logger.info(f"Training {self.epochs} epochs...")
+        self.logger.info(f"Training {self.epochs} epochs, lr: {self.lr}...")
         performance = {}
         for n in range(self.epochs):
             self.logger.info(f"EPOCH {n + 1}:")
@@ -161,5 +163,6 @@ class BowzerClassifier:
             directory=f"{self.model_path}/",
             filename=f"model_epochs_{self.epochs}_performance.json",
         )
+        save_pickle(self.model_settings, f"{self.model_path}/", "model_settings.pkl")
         self.logger.handlers.clear()
         return performance_path
