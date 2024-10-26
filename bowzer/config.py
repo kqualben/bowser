@@ -7,6 +7,7 @@ from typing import Type
 class ModelSettings:
     info: str
     epochs: int
+    learning_rate: float
     batch_size: int
     resize_n: int
     train_transform: torchvision.transforms.Compose
@@ -17,6 +18,7 @@ class ModelSettings:
         return cls(
             info=config["info"],
             epochs=config["epochs"],
+            learning_rate=config["learning_rate"],
             batch_size=config["batch_size"],
             resize_n=config["resize_n"],
             train_transform=config["train_transform"],
