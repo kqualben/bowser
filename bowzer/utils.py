@@ -57,18 +57,19 @@ def logger(directory: str, filename: str):
     return logger
 
 
-def get_models(
-    model_store_path: str = "model_store/trained_20241023/",
-) -> Dict[str, str]:
-    model_dirs = [x for x in os.listdir(model_store_path)][::-1]
-    models = {}
-    for model in model_dirs:
-        dir_files = os.listdir(f"{model_store_path}{model}")
-        perf_filename = [
-            x for x in dir_files if "epoch" in x and "performance" not in x
-        ][0]
-        models[perf_filename] = f"{model_store_path}{model}/{perf_filename}"
-    return models
+def get_model_path(model_name: str) -> str:
+    for root, _, files in os.walk("model_store", topdown=False):
+        for file in files:
+            if model_name in root and "." not in file:
+                return os.path.join(root, file)
+
+
+def get_model_settings(model_path: str) -> str:
+    if model_path is not None:
+        settings_path = os.path.join(
+            model_path.split("model_epochs")[0], "model_settings.pkl"
+        )
+        return settings_path
 
 
 def get_target_image_dict(root: str = "./images/targets/") -> Dict[str, dict]:
