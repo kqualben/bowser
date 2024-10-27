@@ -32,7 +32,9 @@ class BowzerClassifier:
         self.epochs = self.model_settings.epochs
         self.lr = self.model_settings.learning_rate
         self.data_module = Transform(self.model_settings)
-        self.dataloader_train, self.dataloader_test = self.data_module.process()
+        self.dataloader_train, self.dataloader_val, self.dataloader_test = (
+            self.data_module.process()
+        )
         self.dog_names = self.data_module.get_dog_names()
 
     def view_sample_transformations(
@@ -77,19 +79,19 @@ class BowzerClassifier:
         self.model.eval()
         running_val_loss = 0.0
         with torch.no_grad():
-            for images, labels, image_paths in self.dataloader_test:
+            for images, labels, image_paths in self.dataloader_val:
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
                 output = self.model(images)
                 val_loss = self.loss_fn(output, labels)
                 running_val_loss += val_loss.item()
                 val_losses.append(val_loss.item())
-        avg_val_loss = running_val_loss / len(self.dataloader_test)
+        avg_val_loss = running_val_loss / len(self.dataloader_val)
         return avg_loss, avg_val_loss, loss_list, val_losses
 
     def train_eval(
         self,
         save_batch_models: bool = False,
-        save_loss_lists: bool = False,
+        save_epoch_loss_lists: bool = False,
     ) -> Dict:
         self.run_time = datetime.now()
         self.batch_path = f"model_store/trained_{self.run_time.strftime('%Y%m%d')}/model_{self.run_time.strftime('%H%M%S')}"
@@ -105,7 +107,7 @@ class BowzerClassifier:
         )
         self.logger.info(f"Model Results will be saved to: {self.model_path}")
 
-        num_classes = len(self.dataloader_train.dataset.classes)
+        num_classes = self.data_module.num_classes
         self.model = BowzerNet(num_classes).to(DEVICE)
         self.loss_fn = CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
@@ -119,7 +121,7 @@ class BowzerClassifier:
                 save_batch_model=save_batch_models,
             )
             epoch_results = {"avg_loss": avg_loss, "avg_val_loss": avg_val_loss}
-            if save_loss_lists:
+            if save_epoch_loss_lists:
                 epoch_results["loss_list"] = loss_list
                 epoch_results["val_loss"] = val_losses
             performance[f"epoch_{n}"] = epoch_results
@@ -131,10 +133,10 @@ class BowzerClassifier:
         metric_recall = Recall(
             task="multiclass", num_classes=num_classes, average="macro"
         ).to(DEVICE)
-        self.model.eval()
         total = 0
         correct = 0
         val_losses = []
+        self.model.eval()
         for images, labels, image_paths in self.dataloader_test:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             output = self.model(images)
