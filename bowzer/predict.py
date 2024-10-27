@@ -5,10 +5,10 @@ import numpy as np
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 
-from .constants import RESIZE_N, SEED
+from .constants import SEED
 from .data import Transform
 from .model import BowzerNet
-from .utils import open_image
+from .utils import open_image, open_pickle, get_model_path, get_model_settings
 
 plt.rcParams["savefig.bbox"] = "tight"
 
@@ -24,19 +24,17 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-class DataProcessing:
-    def __init__(self):
-        self.data_module = Transform(RESIZE_N)
-        self.dataloader_train, self.dataloader_test = self.data_module.process()
-        self.num_classes = len(self.dataloader_train.dataset.classes)
-
-
-class Predictor(DataProcessing):
-    def __init__(self, model_path: str):
+class Predictor:
+    def __init__(self, model_name: str):
         print(f"Running on device: {DEVICE}")
-        super().__init__()
-        self.model_path = model_path
-        self.model_name = self.model_path.split("/")[-1]
+        self.model_name = model_name
+        self.model_path = get_model_path(model_name)
+        self.model_settings = open_pickle(get_model_settings(self.model_path))
+        self.data_module = Transform(self.model_settings)
+        self.dataloader_train, self.dataloader_val, self.dataloader_test = (
+            self.data_module.process()
+        )
+        self.num_classes = self.data_module.num_classes
         self.model = BowzerNet(self.num_classes).to(DEVICE)
         self.model.load_state_dict(torch.load(self.model_path, weights_only=False))
         self.train_embeddings, self.train_batch_labels, self.train_batch_image_paths = (
@@ -149,13 +147,13 @@ class Predictor(DataProcessing):
             figsize=((1 + top_n_breeds) * scaler, scaler * 1.25),
         )
         target_image = open_image(self.target_image_path)
+        target_label = f"{'Target' if self.target_label is None else self.target_label}"
         axes[0].imshow(np.asarray(target_image))
-        axes[0].set_title(
-            f"{'Target' if self.target_label is None else self.target_label}",
-            size="medium",
-        )
+        axes[0].set_title(target_label, size="medium")
         axes[0].axis("off")
         for i, (breed_name, path) in enumerate(top_n_breeds_info):
+            if i == 0:
+                top_breed_name = breed_name
             pred_image = open_image(path)
             axes[i + 1].imshow(np.asarray(pred_image))
             axes[i + 1].axis("off")
@@ -163,8 +161,7 @@ class Predictor(DataProcessing):
                 f"{i+1}: {breed_name}",
                 size="medium",
             )
-
-        fig.suptitle(self.model_name)
+        fig.suptitle(f"Top Match for {target_label}: {top_breed_name}")
         fig.tight_layout()
         if save:
             path = self.target_image_path.replace("targets", "predictions").replace(
