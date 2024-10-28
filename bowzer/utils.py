@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Dict, Literal
+from typing import Dict, Literal, List, Tuple
 
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -82,27 +82,34 @@ def get_target_image_dict(root: str = "./images/targets/") -> Dict[str, dict]:
     return image_dict
 
 
-def compare_model_loss(model_dict: dict, loss: Literal["train", "val"] = "train"):
+def compare_model_loss(model_list: List[str], loss: Literal["train", "val"] = "train"):
+    compare_models = [(x, f"{get_model_path(x)}_performance.json") for x in model_list]
+
     loss_target = "avg_loss" if loss == "train" else "avg_val_loss"
     model_avg_losses = {}
-    for label in model_dict:
-        model_perf = open_json(f"{model_dict[label]}_performance.json")
+    model_accuracy = {}
+    for i in range(len(compare_models)):
+        model_name, model_performance_path = compare_models[i]
+        model_perf = open_json(model_performance_path)
         epoch_avg_loss = []
         for epoch in [x for x in model_perf.keys() if "epoch" in x.lower()]:
             epoch_avg_loss.append(model_perf[epoch][loss_target])
-        model_avg_losses[label] = {
-            "loss": epoch_avg_loss,
-            "accuracy": model_perf["accuracy"] * 100,
-        }
+        model_avg_losses[model_name] = epoch_avg_loss
+        model_accuracy[model_name] = model_perf["accuracy"] * 100
 
+    model_avg_losses = {
+        key: value
+        for key, value in sorted(
+            model_avg_losses.items(), key=lambda item: len(item[1]), reverse=True
+        )
+    }
     fig, ax = plt.subplots(figsize=(10, 6))
     for label in model_avg_losses:
-        total_loss = model_avg_losses[label]["loss"]
-        acc = model_avg_losses[label]["accuracy"]
+        total_loss = model_avg_losses[label]
         epoch_range = range(1, len(total_loss) + 1)
         plt.scatter(x=epoch_range, y=total_loss, label=f"{label}")
         ax.annotate(
-            f"Accuracy:\n{acc:.2f}%",
+            f"Accuracy:\n{model_accuracy[label]:.2f}%",
             xy=(epoch_range[-1], total_loss[-1]),
             xytext=(0, 25),
             textcoords="offset points",
@@ -114,6 +121,40 @@ def compare_model_loss(model_dict: dict, loss: Literal["train", "val"] = "train"
     ax.set_ylabel(f"{loss.title()} Loss")
     plt.legend()
     plt.title(f"Bowser Model {loss.title()} Loss Comparison")
+    fig.tight_layout()
+    plt.show()
+
+
+def compare_model_performance(model_list: List[Tuple[str, str]]) -> None:
+    compare_models = [
+        (x[0], x[1], f"{get_model_path(x[0])}_performance.json") for x in model_list
+    ]
+
+    fig, ax = plt.subplots(
+        1, len(compare_models), figsize=(6 * (len(compare_models)), 6)
+    )
+    for i in range(len(compare_models)):
+        model_name, config_label, model_performance_path = compare_models[i]
+        model_perf = open_json(model_performance_path)
+        model_epochs = [x for x in model_perf.keys() if "epoch" in x.lower()]
+        accuracy = 100 * model_perf["accuracy"]
+        model_train_loss = [model_perf[epoch]["avg_loss"] for epoch in model_epochs]
+        model_val_loss = [model_perf[epoch]["avg_val_loss"] for epoch in model_epochs]
+        ax[i].scatter(
+            x=range(1, len(model_epochs) + 1), y=model_train_loss, label="Train Loss"
+        )
+        ax[i].scatter(
+            x=range(1, len(model_epochs) + 1),
+            y=model_val_loss,
+            label="Val loss",
+            color="red",
+        )
+        ax[i].set_title(f"{model_name} {config_label} Accuracy: {accuracy:.2f}%")
+        ax[i].legend()
+        ax[i].set_xlabel("Epoch")
+        ax[i].set_ylabel("Loss")
+
+    fig.suptitle("Model Loss Comparison", size="large", weight="bold")
     fig.tight_layout()
     plt.show()
 
