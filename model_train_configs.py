@@ -107,3 +107,63 @@ config_2_e10 = {
 }
 config_2_e10.update(config_2_base)
 config_2_e10.update(config_2_transforms)
+
+#### Retrain to Adjust for Overfitting ###
+config_3_base = {"batch_size": 64, "resize_n": 128, "learning_rate": 0.0001}
+config_3_transforms = {
+    "train_transform": transforms.Compose(
+        [
+            transforms.RandomResizedCrop(config_3_base["resize_n"], antialias=True),
+            transforms.RandomHorizontalFlip(),
+            transforms.GaussianBlur(kernel_size=3),
+            transforms.RandomRotation(45),
+            transforms.RandomGrayscale(0.50),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    ),
+    "test_transform": transforms.Compose(
+        [
+            transforms.RandomResizedCrop(config_3_base["resize_n"], antialias=True),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    ),
+}
+
+config_3_e50 = {
+    "info": "Building off config 1. Decreasing lr. Trained with 50 Epochs",
+    "epochs": 50,
+}
+config_3_e50.update(config_3_base)
+config_3_e50.update(config_3_transforms)
+
+#### Retrain to Adjust for Overfitting ###
+prod_config_base = {"batch_size": 64, "resize_n": 128, "learning_rate": 0.00001}
+prod_config_transforms = {
+    "train_transform": transforms.Compose(
+        [
+            transforms.RandomResizedCrop(prod_config_base["resize_n"], antialias=True),
+            transforms.RandomHorizontalFlip(),
+            transforms.GaussianBlur(kernel_size=3),
+            transforms.RandomRotation(45),
+            transforms.RandomGrayscale(0.50),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    ),
+    "test_transform": transforms.Compose(
+        [
+            transforms.RandomResizedCrop(prod_config_base["resize_n"], antialias=True),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    ),
+}
+
+prod_config = {
+    "info": "Building off config 3. Decreasing lr. Trained with 50 Epochs",
+    "epochs": 50,
+}
+prod_config.update(prod_config_base)
+prod_config.update(prod_config_transforms)
