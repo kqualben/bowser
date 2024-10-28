@@ -162,8 +162,8 @@ prod_config_transforms = {
 }
 
 prod_config = {
-    "info": "Building off config 3. Decreasing lr. Trained with 50 Epochs",
-    "epochs": 50,
+    "info": "Final Model Config.",
+    "epochs": 100,
 }
 prod_config.update(prod_config_base)
 prod_config.update(prod_config_transforms)
