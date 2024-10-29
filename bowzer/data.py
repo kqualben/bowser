@@ -26,9 +26,10 @@ class CustomDataset(OxfordIIITPet):
         self.labels = []
 
         for img_name, label in zip(self._images, self._labels):
-            img_path = os.path.join(self.root, "images", img_name)
-            self.image_paths.append(img_path)
-            self.labels.append(label)
+            if label not in CAT_CLASSES.values():
+                img_path = os.path.join(self.root, "images", img_name)
+                self.image_paths.append(img_path)
+                self.labels.append(label)
 
     def __getitem__(self, index):
         image, label = super().__getitem__(index)
