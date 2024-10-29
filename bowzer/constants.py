@@ -1,8 +1,6 @@
 DIR = "C:/Users/kqual/OneDrive/Documents/projects"
 SEED = 30
 PIN_MEMORY = True
-BATCH_SIZE = 64
-RESIZE_N = 128
 
 CAT_CLASSES = {
     "Abyssinian": 0,
