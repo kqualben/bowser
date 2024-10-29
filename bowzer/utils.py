@@ -82,46 +82,36 @@ def get_target_image_dict(root: str = "./images/targets/") -> Dict[str, dict]:
     return image_dict
 
 
-def compare_model_loss(model_list: List[str], loss: Literal["train", "val"] = "train"):
-    compare_models = [(x, f"{get_model_path(x)}_performance.json") for x in model_list]
-
-    loss_target = "avg_loss" if loss == "train" else "avg_val_loss"
-    model_avg_losses = {}
-    model_accuracy = {}
-    for i in range(len(compare_models)):
-        model_name, model_performance_path = compare_models[i]
-        model_perf = open_json(model_performance_path)
-        epoch_avg_loss = []
-        for epoch in [x for x in model_perf.keys() if "epoch" in x.lower()]:
-            epoch_avg_loss.append(model_perf[epoch][loss_target])
-        model_avg_losses[model_name] = epoch_avg_loss
-        model_accuracy[model_name] = model_perf["accuracy"] * 100
-
-    model_avg_losses = {
-        key: value
-        for key, value in sorted(
-            model_avg_losses.items(), key=lambda item: len(item[1]), reverse=True
-        )
-    }
-    fig, ax = plt.subplots(figsize=(10, 6))
-    for label in model_avg_losses:
-        total_loss = model_avg_losses[label]
-        epoch_range = range(1, len(total_loss) + 1)
-        plt.scatter(x=epoch_range, y=total_loss, label=f"{label}")
-        ax.annotate(
-            f"Accuracy:\n{model_accuracy[label]:.2f}%",
-            xy=(epoch_range[-1], total_loss[-1]),
-            xytext=(0, 25),
-            textcoords="offset points",
-            arrowprops=dict(facecolor="black", arrowstyle="->"),
-            horizontalalignment="center",
-            verticalalignment="bottom",
-        )
+def view_model_performance(
+    model_name: str,
+    save_fig: bool = False,
+) -> None:
+    model_performance_path = f"{get_model_path(model_name)}_performance.json"
+    model_perf = open_json(model_performance_path)
+    epoch_keys = [x for x in model_perf.keys() if "epoch" in x.lower()]
+    title = f"{model_name}\nPrecision: {model_perf['precision']:.2f} Recall: {model_perf['recall']:.2f}"
+    accuracy = 100 * model_perf["accuracy"]
+    epoch_avg_loss = [model_perf[epoch]["avg_loss"] for epoch in epoch_keys]
+    epoch_val_loss = [model_perf[epoch]["avg_val_loss"] for epoch in epoch_keys]
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    ax.scatter(x=range(1, len(epoch_keys) + 1), y=epoch_avg_loss, label="Train Loss")
+    ax.scatter(
+        x=range(1, len(epoch_keys) + 1),
+        y=epoch_val_loss,
+        label="Val loss",
+        color="red",
+    )
+    ax.set_title(f"Accuracy: {accuracy:.2f}%")
+    ax.legend()
     ax.set_xlabel("Epoch")
-    ax.set_ylabel(f"{loss.title()} Loss")
-    plt.legend()
-    plt.title(f"Bowser Model {loss.title()} Loss Comparison")
+    ax.set_ylabel("Loss")
+
+    fig.suptitle(title, size="large", weight="bold")
     fig.tight_layout()
+    if save_fig:
+        path = model_performance_path.replace(".json", "_plot.jpg")
+        plt.savefig(path)
+        print(f"Plot saved to: {path}")
     plt.show()
 
 
@@ -161,37 +151,4 @@ def compare_model_performance(
 
     fig.suptitle("Model Loss Comparison", size="large", weight="bold")
     fig.tight_layout()
-    plt.show()
-
-
-def view_model_performance(
-    model_name: str,
-    save_fig: bool = False,
-) -> None:
-    model_performance_path = f"{get_model_path(model_name)}_performance.json"
-    model_perf = open_json(model_performance_path)
-    epoch_keys = [x for x in model_perf.keys() if "epoch" in x.lower()]
-    title = f"{model_name}\nPrecision: {model_perf['precision']:.2f} Recall: {model_perf['recall']:.2f}"
-    accuracy = 100 * model_perf["accuracy"]
-    epoch_avg_loss = [model_perf[epoch]["avg_loss"] for epoch in epoch_keys]
-    epoch_val_loss = [model_perf[epoch]["avg_val_loss"] for epoch in epoch_keys]
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    ax.scatter(x=range(1, len(epoch_keys) + 1), y=epoch_avg_loss, label="Train Loss")
-    ax.scatter(
-        x=range(1, len(epoch_keys) + 1),
-        y=epoch_val_loss,
-        label="Val loss",
-        color="red",
-    )
-    ax.set_title(f"Accuracy: {accuracy:.2f}%")
-    ax.legend()
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel("Loss")
-
-    fig.suptitle(title, size="large", weight="bold")
-    fig.tight_layout()
-    if save_fig:
-        path = model_performance_path.replace(".json", "_plot.jpg")
-        plt.savefig(path)
-        print(f"Plot saved to: {path}")
     plt.show()
