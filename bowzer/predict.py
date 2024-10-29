@@ -44,12 +44,12 @@ class Predictor:
         self.target_label = None
 
     @staticmethod
-    def get_embeddings_labels(model, dataloader) -> Tuple[np.ndarray, List]:
+    def get_embeddings_labels(model, dataloader) -> Tuple[np.ndarray, List, List]:
         model.eval()
         embeddings = []
         batch_labels = []
         batch_paths = []
-        with torch.no_grad():
+        with torch.inference_mode():
             for images, labels, image_paths in dataloader:
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
                 outputs = model(images)
@@ -69,19 +69,9 @@ class Predictor:
         print(f"Making predictions for: {image_path}")
         image_tensor = self.image_to_tensor(image_path)
         self.model.eval()
-        with torch.no_grad():
+        with torch.inference_mode():
             pred = self.model(image_tensor)
         return pred
-
-    def predict(self, target_image_path: str) -> None:
-        self.target_image_path = target_image_path
-        self._target_predictions = self.image_prediction(self.target_image_path)
-        self._ranked_breeds = None
-        self._breed_proba = None
-
-    @property
-    def target_predictions(self):
-        return self._target_predictions
 
     @staticmethod
     def prediction_embedding(preds) -> np.ndarray:
@@ -93,16 +83,48 @@ class Predictor:
         pred_proba = preds.squeeze(0).softmax(0)
         return pred_proba
 
-    def _target_breed_ranking(self) -> List[Tuple[str, str]]:
-        target_embedding = self.prediction_embedding(self.target_predictions)
-        scores = cosine_similarity(self.train_embeddings, target_embedding).flatten()
-        ranked_cls_id = np.argsort(scores)[::-1]
+    @staticmethod
+    def similarity_scores(
+        training_images_embeddings: np.ndarray, target_image_embedding: np.ndarray
+    ) -> np.ndarray:
+        cos = torch.nn.CosineSimilarity(dim=1)
+        sim_scores = cos(
+            torch.Tensor(training_images_embeddings),
+            torch.Tensor(target_image_embedding),
+        ).numpy()
+        return sim_scores
+
+    def predict(self, target_image_path: str) -> None:
+        self.target_image_path = target_image_path
+        self._target_predictions = self.image_prediction(self.target_image_path)
+        self._target_embedding = self.prediction_embedding(self._target_predictions)
+        self._target_prediction_scores = self.similarity_scores(
+            self.train_embeddings, self._target_embedding
+        )
+        self._ranked_breeds = None
+        self._breed_proba = None
+
+    @property
+    def target_predictions(self):
+        return self._target_predictions
+
+    @property
+    def target_prediction_scores(self):
+        return self._target_prediction_scores
+
+    @property
+    def target_image_embedding(self):
+        return self._target_embedding
+
+    def _target_breed_ranking(self) -> List[Tuple[str, str, float]]:
+        scores_ranked = np.argsort(self.target_prediction_scores)[::-1]
         ranked_breeds = [
             (
                 self.data_module.get_idx_label(self.train_batch_labels[i].item()),
                 self.train_batch_image_paths[i],
+                (self.target_prediction_scores[i].item() + 1) / 2,  # similarity score
             )
-            for i in ranked_cls_id
+            for i in scores_ranked
         ]
         return ranked_breeds
 
@@ -129,15 +151,6 @@ class Predictor:
     def get_top_breed_prediction(self, n: int = 1) -> List:
         return self.breed_ranking[:n]
 
-    def predict_target_class(self, image_path: str) -> torch.Tensor:
-        target_image = open_image(image_path)
-        image_tensor = self.data_module.train_transforms(target_image).unsqueeze(0)
-        self.model.eval()
-        with torch.no_grad():
-            pred = self.model(image_tensor).squeeze(0)
-        pred_cls = pred.softmax(0)  # convert tensors to probabilities
-        return pred_cls
-
     def show_predicted_images(
         self, top_n_breeds: int, scaler: int = 3, save: bool = False
     ):
@@ -151,14 +164,14 @@ class Predictor:
         axes[0].imshow(np.asarray(target_image))
         axes[0].set_title(target_label, size="medium")
         axes[0].axis("off")
-        for i, (breed_name, path) in enumerate(top_n_breeds_info):
+        for i, (breed_name, path, similarity) in enumerate(top_n_breeds_info):
             if i == 0:
                 top_breed_name = breed_name
             pred_image = open_image(path)
             axes[i + 1].imshow(np.asarray(pred_image))
             axes[i + 1].axis("off")
             axes[i + 1].set_title(
-                f"{i+1}: {breed_name}",
+                f"{i+1}: {breed_name}\n" + rf"Similarity Score: {similarity:.4f}",
                 size="medium",
             )
         fig.suptitle(f"Top Match for {target_label}: {top_breed_name}")
