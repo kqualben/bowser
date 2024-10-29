@@ -75,7 +75,7 @@ class Transform:
             )
         return self._trainval_dataset
 
-    def _train_val_split(self, train_size: float = 0.70) -> Tuple[Dataset, Dataset]:
+    def _train_val_split(self, train_size: float = 0.80) -> Tuple[Dataset, Dataset]:
         split_n = int(train_size * len(self.trainval_dataset))
         self._train_set, self._val_set = random_split(
             self.trainval_dataset,
@@ -124,9 +124,9 @@ class Transform:
         )
 
     def process(self) -> Tuple[Callable, Callable]:
-        train = self._dataloader(self.train_set, shuffle=True)
-        val = self._dataloader(self.val_set, shuffle=False)
-        test = self._dataloader(self.test_set, shuffle=False)
+        train = self._dataloader(self.train_set, shuffle=True, drop_last=True)
+        val = self._dataloader(self.val_set, shuffle=False, drop_last=False)
+        test = self._dataloader(self.test_set, shuffle=False, drop_last=False)
         return train, val, test
 
     @property
