@@ -135,13 +135,13 @@ class BowzerClassifier:
         ).to(DEVICE)
         total = 0
         correct = 0
-        val_losses = []
+        test_losses = []
         self.model.eval()
         for images, labels, image_paths in self.dataloader_test:
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             output = self.model(images)
-            val_loss = self.loss_fn(output, labels)
-            val_losses.append(val_loss.item())
+            test_loss = self.loss_fn(output, labels)
+            test_losses.append(test_loss.item())
             _, preds = torch.max(output.data, 1)
             total += labels.size(0)
             correct += (preds == labels).sum().item()
