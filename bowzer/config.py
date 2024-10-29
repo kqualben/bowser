@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import torchvision
+from torchvision.transforms import v2
 from typing import Type
 
 
@@ -10,8 +10,8 @@ class ModelSettings:
     learning_rate: float
     batch_size: int
     resize_n: int
-    train_transform: torchvision.transforms.Compose
-    test_transform: torchvision.transforms.Compose
+    train_transform: v2.Compose
+    test_transform: v2.Compose
 
     @classmethod
     def from_dict(cls: Type["ModelSettings"], config="dict") -> "ModelSettings":
