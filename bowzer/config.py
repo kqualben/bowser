@@ -5,6 +5,10 @@ from typing import Type
 
 @dataclass
 class ModelSettings:
+    """
+    Dataclass to manage config settings.
+    """
+
     info: str
     epochs: int
     learning_rate: float
@@ -15,6 +19,9 @@ class ModelSettings:
 
     @classmethod
     def from_dict(cls: Type["ModelSettings"], config="dict") -> "ModelSettings":
+        """
+        class method to extract values from config dictionary.
+        """
         return cls(
             info=config["info"],
             epochs=config["epochs"],
