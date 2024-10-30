@@ -3,7 +3,14 @@ from torchvision.models import ResNet50_Weights, resnet50
 
 
 class BowzerNet(nn.Module):
+    """
+    Bowzer Model Module
+    """
+
     def __init__(self, num_classes: int):
+        """
+        num_classes: number of classes in dataset
+        """
         super().__init__()
         self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
         # self.model.fc = nn.Linear(self.model.fc.in_features, num_classes)
