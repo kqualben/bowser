@@ -6,22 +6,26 @@ config_0_base = {"batch_size": 64, "resize_n": 128, "learning_rate": 0.001}
 config_0_transforms = {
     "train_transform": transforms.Compose(
         [
+            transforms.ToDtype(torch.uint8, scale=True),
             transforms.Resize(
                 (config_0_base["resize_n"], config_0_base["resize_n"]), antialias=True
             ),
             transforms.RandomHorizontalFlip(),
             transforms.RandomRotation(45),
             transforms.RandomGrayscale(0.50),
-            transforms.ToTensor(),
+            transforms.ToImage(),
+            transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     ),
     "test_transform": transforms.Compose(
         [
+            transforms.ToDtype(torch.uint8, scale=True),
             transforms.Resize(
                 (config_0_base["resize_n"], config_0_base["resize_n"]), antialias=True
             ),
-            transforms.ToTensor(),
+            transforms.ToImage(),
+            transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     ),
@@ -45,19 +49,23 @@ config_1_base = {"batch_size": 64, "resize_n": 128, "learning_rate": 0.001}
 config_1_transforms = {
     "train_transform": transforms.Compose(
         [
+            transforms.ToDtype(torch.uint8, scale=True),
             transforms.RandomResizedCrop(config_1_base["resize_n"], antialias=True),
             transforms.RandomHorizontalFlip(),
             transforms.GaussianBlur(kernel_size=3),
             transforms.RandomRotation(45),
             transforms.RandomGrayscale(0.50),
-            transforms.ToTensor(),
+            transforms.ToImage(),
+            transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     ),
     "test_transform": transforms.Compose(
         [
+            transforms.ToDtype(torch.uint8, scale=True),
             transforms.RandomResizedCrop(config_1_base["resize_n"], antialias=True),
-            transforms.ToTensor(),
+            transforms.ToImage(),
+            transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     ),
@@ -81,7 +89,9 @@ prod_config_transforms = {
             transforms.RandomHorizontalFlip(),
             transforms.GaussianBlur(kernel_size=(3, 3), sigma=(0.1, 2.0)),
             transforms.RandomRotation(45),
-            transforms.ToTensor(),
+            # Because ToTensor() is deprecated:
+            transforms.ToImage(),
+            transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     ),
@@ -89,7 +99,9 @@ prod_config_transforms = {
         [
             transforms.ToDtype(torch.uint8, scale=True),
             transforms.RandomResizedCrop(prod_config_base["resize_n"], antialias=True),
-            transforms.ToTensor(),
+            # Because ToTensor() is deprecated:
+            transforms.ToImage(),
+            transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     ),
@@ -97,7 +109,7 @@ prod_config_transforms = {
 
 prod_config = {
     "info": "Final Model Config.",
-    "epochs": 50,
+    "epochs": 100,
 }
 prod_config.update(prod_config_base)
 prod_config.update(prod_config_transforms)
