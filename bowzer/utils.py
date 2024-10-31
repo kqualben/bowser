@@ -1,11 +1,10 @@
 import json
 import logging
 import os
-from typing import Dict, Literal, List, Tuple
+from typing import Dict, List, Tuple
 
 from PIL import Image
 import matplotlib.pyplot as plt
-import numpy as np
 import pickle
 
 
@@ -183,23 +182,29 @@ def view_model_performance(
     """
     model_performance_path = f"{get_model_path(model_name)}_performance.json"
     model_perf = open_json(model_performance_path)
-    epoch_keys = [x for x in model_perf.keys() if "epoch" in x.lower()]
-    title = f"{model_name}\nPrecision: {model_perf['precision']:.2f} Recall: {model_perf['recall']:.2f}"
+    title = f"{model_name}"
     accuracy = 100 * model_perf["accuracy"]
-    epoch_avg_loss = [model_perf[epoch]["avg_loss"] for epoch in epoch_keys]
-    epoch_val_loss = [model_perf[epoch]["avg_val_loss"] for epoch in epoch_keys]
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    ax.scatter(x=range(1, len(epoch_keys) + 1), y=epoch_avg_loss, label="Train Loss")
-    ax.scatter(
-        x=range(1, len(epoch_keys) + 1),
-        y=epoch_val_loss,
-        label="Val loss",
-        color="red",
+    train_losses = model_perf["train_losses"]
+    val_losses = model_perf["val_losses"]
+    train_accuracies = [x * 100 for x in model_perf["train_accuracies"]]
+    val_accuracies = [x * 100 for x in model_perf["val_accuracies"]]
+    fig, ax = plt.subplots(1, 2, figsize=(12, 6))
+    xrange = range(1, len(train_losses) + 1)
+    ax[0].plot(xrange, train_losses, label="Train Loss", marker=".")
+    ax[0].plot(xrange, val_losses, label="Val Loss", marker=".", color="red")
+    ax[0].set_title(
+        f"Precision: {model_perf['precision']:.2f} Recall: {model_perf['recall']:.2f}"
     )
-    ax.set_title(f"Accuracy: {accuracy:.2f}%")
-    ax.legend()
-    ax.set_xlabel("Epoch")
-    ax.set_ylabel("Loss")
+    ax[0].legend()
+    ax[0].set_xlabel("Epoch")
+    ax[0].set_ylabel("Loss")
+
+    ax[1].plot(xrange, train_accuracies, label="Train", marker=".")
+    ax[1].plot(xrange, val_accuracies, label="Val", marker=".", color="red")
+    ax[1].set_title(f"Accuracy: {accuracy:.2f}%")
+    ax[1].legend()
+    ax[1].set_xlabel("Epoch")
+    ax[1].set_ylabel("Accuracy")
 
     fig.suptitle(title, size="large", weight="bold")
     fig.tight_layout()
