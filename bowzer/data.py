@@ -19,25 +19,62 @@ torch.backends.cudnn.benchmark = False
 
 
 class CustomDataset(OxfordIIITPet):
-    def __init__(self, *args, **kwargs):
+    """
+    Customized the OxfordIIITPet dataset.
+
+    Excludes Cat Breeds.
+    __getitem__ returns image, label, and image_path
+    """
+
+    def __init__(self, include_cats: bool, *args, **kwargs):
+        """
+        args:
+        kwargs:
+        """
         super().__init__(*args, **kwargs)
 
-        self.image_paths = []
+        self.image_tensors = []
         self.labels = []
+        self.image_paths = []
 
-        for img_name, label in zip(self._images, self._labels):
-            if label not in CAT_CLASSES.values():
-                img_path = os.path.join(self.root, "images", img_name)
-                self.image_paths.append(img_path)
+        if include_cats:
+            self.class_dict = self.class_to_idx
+        else:
+            self.class_dict = {
+                breed: idx
+                for breed, idx in self.class_to_idx.items()
+                if breed not in CAT_CLASSES.keys()
+            }
+
+        for idx, (image_path, label) in enumerate(zip(self._images, self._labels)):
+            if label in self.class_dict.values():
+                image, label = super().__getitem__(idx)
+                self.image_tensors.append(image)
                 self.labels.append(label)
+                self.image_paths.append(image_path.as_posix())
+        # ran into issue due to dropping labels from training -> need to zero index class dict and labels
+        if not include_cats:
+            self.updated_class_labels = {
+                breed: (old_label, idx)
+                for idx, (breed, old_label) in enumerate(self.class_dict.items())
+            }
+            new_labels = np.array(self.labels)
+            for breed, (old, new) in self.updated_class_labels.items():
+                new_labels[new_labels == old] = new
+            # reassign labels and class_dict
+            self.labels = new_labels.tolist()
+            self.class_dict = {
+                breed: new for breed, (old, new) in self.updated_class_labels.items()
+            }
 
     def __getitem__(self, index):
-        image, label = super().__getitem__(index)
+        image = self.image_tensors[index]
+        label = self.labels[index]
         image_path = self.image_paths[index]
         return image, label, image_path
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.image_tensors)
 
 
 class Transform:
@@ -45,10 +82,6 @@ class Transform:
     Load and Transform OxfordIIITPet
 
     :param model_settings: ModelSettings dataclass
-
-    :ivar train_transforms:
-    :ivar test_transforms:
-    :ivar saved_images:
     """
 
     def __init__(self, model_settings: ModelSettings):
@@ -56,6 +89,7 @@ class Transform:
         self.model_settings = model_settings
         self.train_transforms = self.model_settings.train_transform
         self.test_transforms = self.model_settings.test_transform
+        self.include_cats = self.model_settings.include_cats
         self._trainval_dataset = None
         self._train_set = None
         self._val_set = None
@@ -64,19 +98,26 @@ class Transform:
         self.saved_images = []
 
     @staticmethod
-    def _load_transform(transform: torch.Tensor, **kwargs) -> Dataset:
-        return CustomDataset(root=DIR, download=True, transform=transform, **kwargs)
+    def _load_transform(transform: torch.Tensor, include_cats: bool, **kwargs):
+        return CustomDataset(
+            root=DIR,
+            download=True,
+            transform=transform,
+            include_cats=include_cats,
+            **kwargs,
+        )
 
     @property
     def trainval_dataset(self) -> Dataset:
         if self._trainval_dataset is None:
             self._trainval_dataset = self._load_transform(
-                self.train_transforms,
+                include_cats=self.include_cats,
+                transform=self.train_transforms,
                 split="trainval",
             )
         return self._trainval_dataset
 
-    def _train_val_split(self, train_size: float = 0.80) -> Tuple[Dataset, Dataset]:
+    def _train_val_split(self, train_size: float = 0.70) -> Tuple[Dataset, Dataset]:
         split_n = int(train_size * len(self.trainval_dataset))
         self._train_set, self._val_set = random_split(
             self.trainval_dataset,
@@ -101,7 +142,8 @@ class Transform:
     def test_set(self) -> Dataset:
         if self._test_set is None:
             self._test_set = self._load_transform(
-                self.test_transforms,
+                include_cats=self.include_cats,
+                transform=self.test_transforms,
                 split="test",
             )
         return self._test_set
@@ -109,14 +151,14 @@ class Transform:
     @property
     def class_dict(self) -> Dict:
         if self._class_dict is None:
-            self._class_dict = self.trainval_dataset.class_to_idx
+            self._class_dict = self.trainval_dataset.class_dict
         return self._class_dict
 
     @property
     def idx_dict(self) -> Dict:
         return {j: k for k, j in self.class_dict.items()}
 
-    def _dataloader(self, data: Dataset, **kwargs) -> Callable:
+    def _dataloader(self, data: Dataset, **kwargs):
         return DataLoader(
             data,
             batch_size=self.model_settings.batch_size,
@@ -124,7 +166,7 @@ class Transform:
             **kwargs,
         )
 
-    def process(self) -> Tuple[Callable, Callable]:
+    def process(self) -> Tuple:
         train = self._dataloader(self.train_set, shuffle=True, drop_last=True)
         val = self._dataloader(self.val_set, shuffle=False, drop_last=False)
         test = self._dataloader(self.test_set, shuffle=False, drop_last=False)
@@ -132,11 +174,11 @@ class Transform:
 
     @property
     def num_classes(self) -> int:
-        return len(self.trainval_dataset.classes)
+        return len(self.class_dict)
 
     @property
     def train_image_paths(self) -> List:
-        return self.trainval_dataset._images
+        return self.trainval_dataset.image_paths
 
     def get_label_idx(self, label: str) -> int:
         return self.class_dict[label]
@@ -145,23 +187,21 @@ class Transform:
         return self.idx_dict[idx]
 
     def get_dog_names(self) -> List[str]:
-        return [
-            x
-            for x in self.trainval_dataset.classes
-            if x not in list(CAT_CLASSES.keys())
-        ]
+        return [x for x in self.class_dict.keys() if x not in list(CAT_CLASSES.keys())]
 
     def get_breed_image(self, breeds: List[str]) -> Dict[str, str]:
         paths = {}
         counter = 0
         while counter < len(breeds):
             for im in self.train_image_paths:
-                clean = im.as_posix().replace("_", " ").title()
+                clean = im.replace("_", " ").title()
                 if any(map(clean.__contains__, breeds)):
                     dog = [dog for dog in breeds if dog in clean][0]
-                    paths[dog] = im.as_posix()
+                    paths[dog] = im
                     breeds.remove(dog)
                 counter += 1
+        if breeds is not None:
+            print(f"Excluded Breeds: {breeds}")
         return paths
 
     def show_image_transforms(
