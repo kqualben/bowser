@@ -35,7 +35,6 @@ class BowzerClassifier:
         self.dataloader_train, self.dataloader_val, self.dataloader_test = (
             self.data_module.process()
         )
-        self.dog_names = self.data_module.get_dog_names()
 
     def view_sample_transformations(
         self,
@@ -49,22 +48,26 @@ class BowzerClassifier:
         self,
         idx: int,
         save_batch_model: bool = False,
-    ) -> Tuple[float, float, List, List]:
+        save_epoch_loss_lists: bool = False,
+    ) -> Dict:
 
-        loss_list = []
-        val_losses = []
-
+        epoch_train_losses = []
         running_loss = 0.0
+        train_correct = 0.0
+        train_total = 0.0
+        self.model.train()
         for batch, (images, labels, image_paths) in enumerate(self.dataloader_train):
-            self.model.train()
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             self.optimizer.zero_grad()
-            preds = self.model(images)
-            loss = self.loss_fn(preds, labels)
+            outputs = self.model(images)
+            loss = self.loss_fn(outputs, labels)
             loss.backward()
             self.optimizer.step()
             running_loss += loss.item()
-            loss_list.append(loss.item())
+            epoch_train_losses.append(loss.item())
+            _, predicted = torch.max(outputs.data, 1)
+            train_total += labels.size(0)
+            train_correct += (predicted == labels).sum().item()
             if batch % 10 == 0:
                 self.logger.info(
                     f"loss: {loss.item():>7f}  [{(batch + 1) * len(images):>5d}/{len(self.dataloader_train.dataset):>5d}]"
@@ -74,19 +77,36 @@ class BowzerClassifier:
                         self.model.state_dict(),
                         f"{self.batch_path}/model_{idx}_{batch}",
                     )
-        avg_loss = running_loss / (batch + 1)
+        train_loss = running_loss / (batch + 1)
+        train_accuracy = train_correct / train_total
 
-        self.model.eval()
+        epoch_val_losses = []
         running_val_loss = 0.0
+        val_correct = 0.0
+        val_total = 0.0
+        self.model.eval()
         with torch.no_grad():
-            for images, labels, image_paths in self.dataloader_val:
+            for batch, (images, labels, image_paths) in enumerate(self.dataloader_val):
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
-                output = self.model(images)
-                val_loss = self.loss_fn(output, labels)
+                val_outputs = self.model(images)
+                val_loss = self.loss_fn(val_outputs, labels)
                 running_val_loss += val_loss.item()
-                val_losses.append(val_loss.item())
-        avg_val_loss = running_val_loss / len(self.dataloader_val)
-        return avg_loss, avg_val_loss, loss_list, val_losses
+                epoch_val_losses.append(val_loss.item())
+                _, val_predicted = torch.max(val_outputs.data, 1)
+                val_total += labels.size(0)
+                val_correct += (val_predicted == labels).sum().item()
+        val_loss = running_val_loss / (batch + 1)
+        val_accuracy = val_correct / val_total
+        return_dict = {
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+            "train_accuracy": train_accuracy,
+            "val_accuracy": val_accuracy,
+        }
+        if save_epoch_loss_lists:
+            return_dict["epoch_train_losses"] = epoch_train_losses
+            return_dict["epoch_val_losses"] = epoch_val_losses
+        return return_dict
 
     def train_eval(
         self,
@@ -114,17 +134,30 @@ class BowzerClassifier:
 
         self.logger.info(f"Training {self.epochs} epochs, lr: {self.lr}...")
         performance = {}
+        train_losses = []
+        val_losses = []
+        train_accuracies = []
+        val_accuracies = []
         for n in range(self.epochs):
             self.logger.info(f"EPOCH {n + 1}:")
-            avg_loss, avg_val_loss, loss_list, val_losses = self.train_epoch(
+            epoch_results = self.train_epoch(
                 n,
                 save_batch_model=save_batch_models,
+                save_epoch_loss_lists=save_epoch_loss_lists,
             )
-            epoch_results = {"avg_loss": avg_loss, "avg_val_loss": avg_val_loss}
+            train_losses.append(epoch_results["train_loss"])
+            val_losses.append(epoch_results["val_loss"])
+            train_accuracies.append(epoch_results["train_accuracy"])
+            val_accuracies.append(epoch_results["val_accuracy"])
             if save_epoch_loss_lists:
-                epoch_results["loss_list"] = loss_list
-                epoch_results["val_loss"] = val_losses
-            performance[f"epoch_{n}"] = epoch_results
+                performance[f"epoch_{n}"] = {
+                    "epoch_train_losses": epoch_results["epoch_train_losses"],
+                    "epoch_val_losses": epoch_results["epoch_val_losses"],
+                }
+        performance["train_losses"] = train_losses
+        performance["val_losses"] = val_losses
+        performance["train_accuracies"] = train_accuracies
+        performance["val_accuracies"] = val_accuracies
 
         self.logger.info("Final Evaluation...")
         metric_precision = Precision(
