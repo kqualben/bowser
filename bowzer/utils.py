@@ -230,31 +230,35 @@ def compare_model_performance(
     ]
 
     fig, ax = plt.subplots(
-        1,
+        2,
         len(compare_models),
-        figsize=(6 * (len(compare_models)), 6),
+        figsize=(6 * (len(compare_models)), 6 * 2),
         sharey=share_yaxis,
     )
     for i in range(len(compare_models)):
         model_name, config_label, model_performance_path = compare_models[i]
         model_perf = open_json(model_performance_path)
-        model_epochs = [x for x in model_perf.keys() if "epoch" in x.lower()]
         accuracy = 100 * model_perf["accuracy"]
-        model_train_loss = [model_perf[epoch]["avg_loss"] for epoch in model_epochs]
-        model_val_loss = [model_perf[epoch]["avg_val_loss"] for epoch in model_epochs]
-        ax[i].scatter(
-            x=range(1, len(model_epochs) + 1), y=model_train_loss, label="Train Loss"
+        train_losses = model_perf["train_losses"]
+        val_losses = model_perf["val_losses"]
+        train_accuracies = [x * 100 for x in model_perf["train_accuracies"]]
+        val_accuracies = [x * 100 for x in model_perf["val_accuracies"]]
+        xrange = range(1, len(train_losses) + 1)
+        ax[0][i].plot(xrange, train_losses, label="Train Loss", marker=".")
+        ax[0][i].plot(xrange, val_losses, label="Val Loss", marker=".", color="red")
+        ax[0][i].set_title(
+            f"{model_name} {config_label}\nPrecision: {model_perf['precision']:.2f} Recall: {model_perf['recall']:.2f}"
         )
-        ax[i].scatter(
-            x=range(1, len(model_epochs) + 1),
-            y=model_val_loss,
-            label="Val loss",
-            color="red",
-        )
-        ax[i].set_title(f"{model_name} {config_label} Accuracy: {accuracy:.2f}%")
-        ax[i].legend()
-        ax[i].set_xlabel("Epoch")
-        ax[i].set_ylabel("Loss")
+        ax[0][i].legend()
+        ax[0][i].set_xlabel("Epoch")
+        ax[0][i].set_ylabel("Loss")
+
+        ax[1][i].plot(xrange, train_accuracies, label="Train")
+        ax[1][i].plot(xrange, val_accuracies, label="Val")
+        ax[1][i].set_title(f"Accuracy: {accuracy:.2f}%")
+        ax[1][i].legend()
+        ax[1][i].set_xlabel("Epoch")
+        ax[1][i].set_ylabel("Accuracy")
 
     fig.suptitle("Model Loss Comparison", size="large", weight="bold")
     fig.tight_layout()
