@@ -128,6 +128,7 @@ class BowzerClassifier:
         self.logger.info(f"Model Results will be saved to: {self.model_path}")
 
         num_classes = self.data_module.num_classes
+        self.logger.info(f"Number of classes: {num_classes}")
         self.model = BowzerNet(num_classes).to(DEVICE)
         self.loss_fn = CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)

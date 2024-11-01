@@ -28,8 +28,10 @@ class CustomDataset(OxfordIIITPet):
 
     def __init__(self, include_cats: bool, *args, **kwargs):
         """
-        args:
-        kwargs:
+        Params:
+        include_cats: bool when True, allow cat breeds to be trained on
+        args: see OxfordIIITPet documentation
+        kwargs: see OxfordIIITPet documentation
         """
         super().__init__(*args, **kwargs)
 
@@ -68,12 +70,20 @@ class CustomDataset(OxfordIIITPet):
             }
 
     def __getitem__(self, index):
+        """
+        overwrite OxfordIIITPet.__getitem__() since we're excluding specific breeds
+        required for customization with OxfordIIITPet Dataset.
+        """
         image = self.image_tensors[index]
         label = self.labels[index]
         image_path = self.image_paths[index]
         return image, label, image_path
 
     def __len__(self):
+        """
+        overwrite OxfordIIITPet.__len___() since we're excluding specific breeds
+        required for customization with OxfordIIITPet Dataset.
+        """
         return len(self.image_tensors)
 
 
@@ -81,7 +91,8 @@ class Transform:
     """
     Load and Transform OxfordIIITPet
 
-    :param model_settings: ModelSettings dataclass
+    Param:
+    model_settings: ModelSettings dataclass
     """
 
     def __init__(self, model_settings: ModelSettings):
@@ -99,6 +110,14 @@ class Transform:
 
     @staticmethod
     def _load_transform(transform: torch.Tensor, include_cats: bool, **kwargs):
+        """
+        method to load and transform CustomDataset.
+
+        Params:
+        transform: transformation to apply on dataset
+        include_cats: bool when True, allow cat breeds to be trained on
+        kwargs: see OxfordIIITPet documentation
+        """
         return CustomDataset(
             root=DIR,
             download=True,
@@ -109,6 +128,9 @@ class Transform:
 
     @property
     def trainval_dataset(self) -> Dataset:
+        """
+        property which returns the trainval_dataset dataset class attribute
+        """
         if self._trainval_dataset is None:
             self._trainval_dataset = self._load_transform(
                 include_cats=self.include_cats,
@@ -117,29 +139,56 @@ class Transform:
             )
         return self._trainval_dataset
 
-    def _train_val_split(self, train_size: float = 0.70) -> Tuple[Dataset, Dataset]:
-        split_n = int(train_size * len(self.trainval_dataset))
-        self._train_set, self._val_set = random_split(
-            self.trainval_dataset,
-            [split_n, len(self.trainval_dataset) - split_n],
+    @staticmethod
+    def _train_val_split(
+        dataset: Dataset, train_size: float = 0.70
+    ) -> Tuple[Dataset, Dataset]:
+        """
+        method to split a dataset into train, val segments.
+
+        Params:
+        dataset: pytorch Dataset
+        train_size: float percent of dataset which will be used for training.
+
+        Returns:
+        Tuple[0] is the resulting train Dataset
+        Tuple[1] is the resulting val Dataset
+        """
+        split_n = int(train_size * len(dataset))
+        train, val = random_split(
+            dataset,
+            [split_n, len(dataset) - split_n],
             generator=torch.Generator().manual_seed(SEED),
         )
-        return self._train_set, self._val_set
+        return train, val
 
     @property
     def train_set(self) -> Dataset:
+        """
+        property which returns the train_set dataset class attribute
+        """
         if self._train_set is None:
-            self._train_set, self._val_set = self._train_val_split()
+            self._train_set, self._val_set = self._train_val_split(
+                self.trainval_dataset
+            )
         return self._train_set
 
     @property
     def val_set(self) -> Dataset:
+        """
+        property which returns the val_set dataset class attribute
+        """
         if self._val_set is None:
-            self._train_set, self._val_set = self._train_val_split()
+            self._train_set, self._val_set = self._train_val_split(
+                self.trainval_dataset
+            )
         return self._val_set
 
     @property
     def test_set(self) -> Dataset:
+        """
+        property which returns the test_set dataset class attribute
+        """
         if self._test_set is None:
             self._test_set = self._load_transform(
                 include_cats=self.include_cats,
@@ -150,15 +199,35 @@ class Transform:
 
     @property
     def class_dict(self) -> Dict:
+        """
+        property which returns a dictionary mapping breed name to their index label.
+
+        Return:
+        Dict keys are are str breed names and values integer (labels)
+        """
         if self._class_dict is None:
             self._class_dict = self.trainval_dataset.class_dict
         return self._class_dict
 
     @property
     def idx_dict(self) -> Dict:
+        """
+        property which returns class_dict with keys and values are flipped.
+        useful since labels in the dataset are integers rather that breed names.
+
+        Return:
+        Dict keys are integer (labels) and values are str breed names
+        """
         return {j: k for k, j in self.class_dict.items()}
 
     def _dataloader(self, data: Dataset, **kwargs):
+        """
+        helper function to get PyTorch Dataloader
+
+        Params:
+        data: PyTorch Dataset. (train, val, or test)
+        kwargs: see PyTorch DataLoader docs
+        """
         return DataLoader(
             data,
             batch_size=self.model_settings.batch_size,
@@ -167,6 +236,12 @@ class Transform:
         )
 
     def process(self) -> Tuple:
+        """
+        function to load and process data for training
+
+        Returns:
+        Tuple of dataloaders. train, val, test.
+        """
         train = self._dataloader(self.train_set, shuffle=True, drop_last=True)
         val = self._dataloader(self.val_set, shuffle=False, drop_last=False)
         test = self._dataloader(self.test_set, shuffle=False, drop_last=False)
@@ -178,18 +253,51 @@ class Transform:
 
     @property
     def train_image_paths(self) -> List:
+        """
+        property which returns a list of paths to images used in training
+        """
         return self.trainval_dataset.image_paths
 
     def get_label_idx(self, label: str) -> int:
+        """
+        function to get the given label given it's breed name
+
+        Params:
+        label: str breed name
+
+        Returns:
+        int: index
+        """
         return self.class_dict[label]
 
     def get_idx_label(self, idx: int) -> str:
+        """
+        function to get the given breed name given it's label
+
+        Params:
+        idx: int index
+
+        Returns:
+        str: label i.e. breed name
+        """
         return self.idx_dict[idx]
 
     def get_dog_names(self) -> List[str]:
+        """
+        function to return a list of dog breed names, defined by what is not a breed in CAT_CLASSES.
+        """
         return [x for x in self.class_dict.keys() if x not in list(CAT_CLASSES.keys())]
 
     def get_breed_image(self, breeds: List[str]) -> Dict[str, str]:
+        """
+        function which generates a dictionary containing an image path for each given breed
+
+        Params:
+        breeds: List of breed names which exist in the OxfordPet dataset
+
+        Returns:
+        Dictionary where keys are the breed names and paths correspond to their image locations.
+        """
         paths = {}
         counter = 0
         while counter < len(breeds):
@@ -207,6 +315,14 @@ class Transform:
     def show_image_transforms(
         self, image_paths: Dict[str, str], train: bool = True, save: bool = False
     ) -> None:
+        """
+        function to show images and an example of their transformation
+
+        Params:
+        image_paths: dict where the key is the breed name and value is the path to it's image
+        train: bool when True, apply train transformation. else apply test transformation.
+        save: bool when True, save to a tmp file path. path get's stored in self.saved_images for later placement.
+        """
         transformer = self.train_transforms if train else self.test_transforms
         for name, img in image_paths.items():
             fig, axes = plt.subplots(ncols=2, squeeze=True)
