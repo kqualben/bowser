@@ -3,7 +3,6 @@ from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.metrics.pairwise import cosine_similarity
 
 from .constants import SEED
 from .data import Transform
@@ -25,7 +24,14 @@ torch.backends.cudnn.benchmark = False
 
 
 class Predictor:
+    """
+    Class to make predictions with bowzer model.
+    """
+
     def __init__(self, model_name: str):
+        """
+        :param str model_name: name of folder in 'model_store' that contains model artifacts.
+        """
         print(f"Running on device: {DEVICE}")
         self.model_name = model_name
         self.model_path = get_model_path(model_name)
