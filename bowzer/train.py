@@ -82,6 +82,7 @@ class BowzerClassifier:
         train_total = 0.0
         self.model.train()
         for batch, (images, labels, image_paths) in enumerate(self.dataloader_train):
+            torch.cuda.empty_cache()  # clear space
             images, labels = images.to(DEVICE), labels.to(DEVICE)
             self.optimizer.zero_grad()
             outputs = self.model(images)
@@ -94,9 +95,7 @@ class BowzerClassifier:
             train_total += labels.size(0)
             train_correct += (predicted == labels).sum().item()
             if batch % 10 == 0:
-                self.logger.info(
-                    f"loss: {loss.item():>7f}  [{(batch + 1) * len(images):>5d}/{len(self.dataloader_train.dataset):>5d}]"
-                )
+                # self.logger.info(f"loss: {loss.item():>7f}  [{(batch + 1) * len(images):>5d}/{len(self.dataloader_train.dataset):>5d}]")
                 if save_batch_model:
                     torch.save(
                         self.model.state_dict(),
@@ -128,6 +127,10 @@ class BowzerClassifier:
             "train_accuracy": train_accuracy,
             "val_accuracy": val_accuracy,
         }
+
+        self.logger.info(
+            " ".join([f"{key}: {value:.4f}" for key, value in return_dict.items()])
+        )
         if save_epoch_loss_lists:
             return_dict["epoch_train_losses"] = epoch_train_losses
             return_dict["epoch_val_losses"] = epoch_val_losses
