@@ -12,11 +12,9 @@ def open_image(image_path: str) -> Image:
     """
     function to open an image given it's path.
 
-    Params:
-    image_path: path to image file.
+    :param str image_path: path to image file.
 
-    Returns:
-    PIL.Image
+    :return PIL.Image:
     """
     return Image.open(image_path)
 
@@ -25,13 +23,11 @@ def save_json(data: dict, directory: str, filename: str) -> str:
     """
     function to save data dictionary to given directory/filename.
 
-    Params:
-    data: dictionary
-    directory: root directory where file will be saved.
-    filename: name and file type.
+    :param dict data: dictionary
+    :param str directory: root directory where file will be saved.
+    :param str filename: name and file type.
 
-    Returns:
-    <str> path to where file has been saved.
+    :return str: path to where file has been saved.
     """
     location = os.path.join(directory, filename)
     with open(location, "w") as f:
@@ -44,11 +40,9 @@ def open_json(path: str) -> Dict:
     """
     function to open an json file given it's path.
 
-    Params:
-    path: path to json file.
+    :param str path: path to json file.
 
-    Returns:
-    <dict>
+    :return dict:
     """
     print(f"Loading: {path}")
     with open(path, "r") as f:
@@ -60,13 +54,11 @@ def save_pickle(data, directory: str, filename: str) -> str:
     """
     function to save data object to given directory/filename.
 
-    Params:
-    data: object
-    directory: root directory where file will be saved.
-    filename: name and file type.
+    :param pytorch.object data: pytorch model object
+    :param str directory: root directory where file will be saved.
+    :param str filename: name and file type.
 
-    Returns:
-    <str> path to where file has been saved.
+    :return str: path to where file has been saved.
     """
     location = os.path.join(directory, filename)
     with open(location, "wb") as f:
@@ -79,11 +71,9 @@ def open_pickle(path: str) -> Dict:
     """
     function to open an pickle file given it's path.
 
-    Params:
-    path: path to pickle file.
+    :param str path: path to pickle file.
 
-    Returns:
-    <dict>
+    :return dict:
     """
     print(f"Loading: {path}")
     with open(path, "rb") as f:
@@ -95,12 +85,10 @@ def logger(directory: str, filename: str):
     """
     function to spin up logger module which gets saved to given directory/filename.
 
-    Params:
-    directory: root directory where file will be saved
-    filename: name and file type
+    :param str directory: root directory where file will be saved
+    :param str filename: name and file type
 
-    Returns:
-    logger object
+    :return logging.object:
     """
     logging.basicConfig(
         filename=f"{directory}/{filename}",
@@ -119,11 +107,9 @@ def get_model_path(model_name: str) -> str:
     """
     function to get model within 'model_store' directory.
 
-    Params:
-    model_name: name of subfolder within model_store/training_YYYYMMDD
+    :param str model_name: name of subfolder within model_store/training_YYYYMMDD
 
-    Returns:
-    <str> path to PyTorch model.
+    :return str: path to PyTorch model.
     """
     for root, _, files in os.walk("model_store", topdown=False):
         for file in files:
@@ -137,11 +123,9 @@ def get_model_settings(model_path: str) -> str:
     model settings are generally saved as 'model_settings.pkl'
     use in conjunction with <get_model_path>.
 
-    Params:
-    model_path: <str> path to a model object.
+    :param str model_path: path to a model object.
 
-    Returns:
-    <str> path to a model's 'model_settings.pkl' file.
+    :return str: path to a model's 'model_settings.pkl' file.
     """
     if model_path is not None:
         settings_path = os.path.join(
@@ -154,11 +138,9 @@ def get_target_image_dict(root: str = "./images/targets/") -> Dict[str, dict]:
     """
     function to package up target image names and paths in one consolidated dictionary.
 
-    Params:
-    root: relative path to image directory
+    :param str root: relative path to image directory
 
-    Returns:
-    Dict[str: target_name : Dict[image_name: image_path]]
+    :return dict: keys: target_name values: dict of file label and path
     """
     image_dict = {name: [] for name in os.listdir(root)}
     for folder in image_dict:
@@ -176,9 +158,8 @@ def view_model_performance(
     """
     function to plot model performance i.e. train vs validation loss.
 
-    Params:
-    model_name: name of subfolder within model_store/training_YYYYMMDD
-    save_fig: when True, save the generated image to the model's relative folder.
+    :param str model_name: name of subfolder within model_store/training_YYYYMMDD
+    :param bool save_fig: when True, save the generated image to the model's relative folder.
     """
     model_performance_path = f"{get_model_path(model_name)}_performance.json"
     model_perf = open_json(model_performance_path)
@@ -221,9 +202,8 @@ def compare_model_performance(
     """
     function to plot and compare models, specifically train vs validation loss.
 
-    Params:
-    model_list: list of model names to compare within the same figure.
-    share_yaxis: when True, all subplots' yaxis will be shared. useful for aligning results on different scales.
+    :param list model_list: list of model names to compare within the same figure.
+    :param bool share_yaxis: when True, all subplots' yaxis will be shared. useful for aligning results on different scales.
     """
     compare_models = [
         (x[0], x[1], f"{get_model_path(x[0])}_performance.json") for x in model_list
