@@ -51,6 +51,14 @@ class Predictor:
 
     @staticmethod
     def get_embeddings_labels(model, dataloader) -> Tuple[np.ndarray, List, List]:
+        """
+        method to create label embeddings used for prediction
+
+        :param pytorch.object: pytorch model object
+        :param pytorch.Dataloader: dataloader
+
+        :return tuple: [np.array stacked embedding, list of labels, list of image paths]
+        """
         model.eval()
         embeddings = []
         batch_labels = []
@@ -65,6 +73,13 @@ class Predictor:
         return np.vstack(embeddings), batch_labels, batch_paths
 
     def image_to_tensor(self, image_path: str) -> torch.Tensor:
+        """
+        function which takes a path to an image and returns the image tensor
+
+        :param str image_path: path to image
+
+        :return torch.Tensor:
+        """
         target_image = open_image(image_path)
         image_tensor = (
             self.data_module.train_transforms(target_image).unsqueeze(0).to(DEVICE)
@@ -72,6 +87,11 @@ class Predictor:
         return image_tensor
 
     def image_prediction(self, image_path: str):
+        """
+        function to generate image prediction
+
+        :param str image_path: path to image
+        """
         print(f"Making predictions for: {image_path}")
         image_tensor = self.image_to_tensor(image_path)
         self.model.eval()
@@ -81,11 +101,17 @@ class Predictor:
 
     @staticmethod
     def prediction_embedding(preds) -> np.ndarray:
+        """
+        function to transform prediction to embedding array
+        """
         new_image_embedding = preds.cpu().numpy()
         return new_image_embedding
 
     @staticmethod
     def prediction_probabilities(preds) -> np.ndarray:
+        """
+        function to transform prediction to probability array
+        """
         pred_proba = preds.squeeze(0).softmax(0)
         return pred_proba
 
@@ -93,6 +119,12 @@ class Predictor:
     def similarity_scores(
         training_images_embeddings: np.ndarray, target_image_embedding: np.ndarray
     ) -> np.ndarray:
+        """
+        function to calculate similarity score between training images and target image.
+
+        :param np.ndarray training_images_embeddings: array of training image embeddings
+        :param np.ndarray target_image_embedding: target embedding
+        """
         cos = torch.nn.CosineSimilarity(dim=1)
         sim_scores = cos(
             torch.Tensor(training_images_embeddings),
@@ -101,6 +133,11 @@ class Predictor:
         return sim_scores
 
     def predict(self, target_image_path: str) -> None:
+        """
+        predict target image and score training image similarity
+
+        :param str target_image_path: path to target image
+        """
         self.target_image_path = target_image_path
         self._target_predictions = self.image_prediction(self.target_image_path)
         self._target_embedding = self.prediction_embedding(self._target_predictions)
@@ -112,17 +149,31 @@ class Predictor:
 
     @property
     def target_predictions(self):
+        """
+        property which returns target predictions
+        """
         return self._target_predictions
 
     @property
     def target_prediction_scores(self):
+        """
+        property which returns target prediction scores
+        """
         return self._target_prediction_scores
 
     @property
     def target_image_embedding(self):
+        """
+        property which returns target embedding
+        """
         return self._target_embedding
 
     def _target_breed_ranking(self) -> List[Tuple[str, str, float]]:
+        """
+        helper function to sort `target_prediction_scores` and return list of matches info
+
+        :return list: list[(str label, str image path, float similarity score)]
+        """
         scores_ranked = np.argsort(self.target_prediction_scores)[::-1]
         ranked_breeds = [
             (
@@ -136,11 +187,18 @@ class Predictor:
 
     @property
     def breed_ranking(self) -> List[Tuple[str, str]]:
+        """
+        property which returns target breed ranking
+        """
         if self._ranked_breeds is None:
             self._ranked_breeds = self._target_breed_ranking()
         return self._ranked_breeds
 
     def _target_breed_probabilities(self) -> Dict[str, float]:
+        """
+        helper function which transforms target predictions to probabilities
+        returns a mapping of breed to probability
+        """
         preds_proba = self.prediction_probabilities(self.target_predictions)
         breed_proba = {
             k: preds_proba.data[v].item()
@@ -150,16 +208,29 @@ class Predictor:
 
     @property
     def breed_probabilities(self) -> Dict[str, float]:
+        """
+        property which returns target breed probabilities
+        """
         if self._breed_proba is None:
             self._breed_proba = self._target_breed_probabilities()
         return self._breed_proba
 
     def get_top_breed_prediction(self, n: int = 1) -> List:
+        """
+        function to return top n `breed_ranking`
+        """
         return self.breed_ranking[:n]
 
     def show_predicted_images(
         self, top_n_breeds: int, scaler: int = 3, save: bool = False
     ):
+        """
+        function to show top n breeds for given target
+
+        :param int top_n_breeds: number of matches to show
+        :param int scaler: scale subplots proportionally with this scaler
+        :param bool save: when True, save result to prediction directory under target folder.
+        """
         top_n_breeds_info = self.get_top_breed_prediction(top_n_breeds)
         fig, axes = plt.subplots(
             ncols=(1 + top_n_breeds),
@@ -197,6 +268,12 @@ class Predictor:
         top_n_breeds: int = 5,
         save: bool = False,
     ) -> None:
+        """
+        function to loop through dictionary and make predictions
+        :param dict image_dict: see `bowzer.utils.get_target_image_dict`
+        :param int top_n_breeds: number of matches to show per target image
+        :param bool save: when True, images get saved to prediction directory under target folder.
+        """
         for character in image_dict:
             print(f"Predicting {character} images...")
             char_images = image_dict[character]
