@@ -1,7 +1,7 @@
 import os
 from contextlib import suppress
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import torch
 from torch.nn import CrossEntropyLoss
 from torchmetrics import Precision, Recall
@@ -26,7 +26,15 @@ torch.backends.cudnn.benchmark = False
 
 
 class BowzerClassifier:
+    """
+    Class to train BowzerNet using ModelSettings.
+    """
+
     def __init__(self, model_settings: ModelSettings):
+        """
+        :param model_settings: see bowzer.config.ModelSettings
+        :type model_settings: ModelSettings
+        """
         print(f"Running on device: {DEVICE}")
         self.model_settings = model_settings
         self.epochs = self.model_settings.epochs
@@ -41,6 +49,15 @@ class BowzerClassifier:
         breeds: List[str] = ["Beagle", "German Shorthaired", "Chihuahua"],
         save_images: bool = False,
     ) -> None:
+        """
+        function to view a few sample transformations within the training environment.
+
+        :param breeds: list of breed names
+        :type breeds: list
+        :param save_images: when True, the image will be save to a tmp file when
+        :type save_images: bool
+        :rtype: None
+        """
         _paths = self.data_module.get_breed_image(breeds)
         self.data_module.show_image_transforms(_paths, save=save_images)
 
@@ -50,7 +67,15 @@ class BowzerClassifier:
         save_batch_model: bool = False,
         save_epoch_loss_lists: bool = False,
     ) -> Dict:
+        """
+        function to train a single epoch.
 
+        :param int idx: epoch index
+        :param bool save_batch_model: when True, save model state during epoch training.
+        :param bool save_epoch_loss_lists: when True, save train and val loss within the epoch.
+
+        :return Dict: Dictionary containing epoch loss and accuracy metrics
+        """
         epoch_train_losses = []
         running_loss = 0.0
         train_correct = 0.0
@@ -113,6 +138,14 @@ class BowzerClassifier:
         save_batch_models: bool = False,
         save_epoch_loss_lists: bool = False,
     ) -> Dict:
+        """
+        function to train and evaluate a model.
+
+        :param bool save_batch_models: see :func:`train_epoch`
+        :param bool save_epoch_loss_lists: see :func:`train_epoch`
+
+        :return Dict: Dictionary containing model loss, accuracy metrics as well as epoch info.
+        """
         self.run_time = datetime.now()
         self.batch_path = f"model_store/trained_{self.run_time.strftime('%Y%m%d')}/model_{self.run_time.strftime('%H%M%S')}"
         if save_batch_models:
