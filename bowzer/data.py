@@ -332,7 +332,7 @@ class Transform:
         Params:
         image_paths: dict where the key is the breed name and value is the path to it's image
         train: bool when True, apply train transformation. else apply test transformation.
-        save: bool when True, save to a tmp file path. path get's stored in self.saved_images for later placement.
+        save: bool when True, save the image to the images/training_data_samples/ dir.
         """
         transformer = self.train_transforms if train else self.test_transforms
         for name, img in image_paths.items():
@@ -344,7 +344,7 @@ class Transform:
             axes[1].set_title("Transformed", size="medium")
             fig.tight_layout()
             if save:
-                path = f"/tmp/{name.replace(' ','_').lower()}_{'train' if train else 'test'}_transform.png"
+                path = f"./images/training_data_samples/{name.replace(' ','_').lower()}_{'train' if train else 'test'}_transform.png"
                 plt.savefig(path)
                 self.saved_images.append(path)
             plt.show()
