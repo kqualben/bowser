@@ -102,6 +102,7 @@ class Transform:
         self.test_transforms = self.model_settings.test_transform
         self.include_cats = self.model_settings.include_cats
         self._trainval_dataset = None
+        self._train_val_split = None
         self._train_set = None
         self._val_set = None
         self._test_set = None
@@ -140,7 +141,7 @@ class Transform:
         return self._trainval_dataset
 
     @staticmethod
-    def _train_val_split(
+    def _split_dataset(
         dataset: Dataset, train_size: float = 0.70
     ) -> Tuple[Dataset, Dataset]:
         """
@@ -163,14 +164,23 @@ class Transform:
         return train, val
 
     @property
+    def train_val_split(self) -> Dataset:
+        """
+        property which returns the train_val_split datasets
+        """
+        if self._train_val_split is None:
+            self._train_val_split = self._split_dataset(self.trainval_dataset)
+        return self._train_val_split
+
+    @property
     def train_set(self) -> Dataset:
         """
         property which returns the train_set dataset class attribute
         """
         if self._train_set is None:
-            self._train_set, self._val_set = self._train_val_split(
-                self.trainval_dataset
-            )
+            train, val = self.train_val_split
+            self._train_set = train
+            print(f"Train rows: {len(self._train_set)}")
         return self._train_set
 
     @property
@@ -179,9 +189,9 @@ class Transform:
         property which returns the val_set dataset class attribute
         """
         if self._val_set is None:
-            self._train_set, self._val_set = self._train_val_split(
-                self.trainval_dataset
-            )
+            train, val = self.train_val_split
+            self._val_set = val
+            print(f"Val rows: {len(self._val_set)}")
         return self._val_set
 
     @property
@@ -195,6 +205,7 @@ class Transform:
                 transform=self.test_transforms,
                 split="test",
             )
+            print(f"Test rows: {len(self._test_set)}")
         return self._test_set
 
     @property
@@ -206,7 +217,7 @@ class Transform:
         Dict keys are are str breed names and values integer (labels)
         """
         if self._class_dict is None:
-            self._class_dict = self.trainval_dataset.class_dict
+            self._class_dict = self.train_set.dataset.class_dict
         return self._class_dict
 
     @property
@@ -256,7 +267,7 @@ class Transform:
         """
         property which returns a list of paths to images used in training
         """
-        return self.trainval_dataset.image_paths
+        return self.train_set.dataset.image_paths
 
     def get_label_idx(self, label: str) -> int:
         """
@@ -308,7 +319,7 @@ class Transform:
                     paths[dog] = im
                     breeds.remove(dog)
                 counter += 1
-        if breeds is not None:
+        if len(breeds) > 0:
             print(f"Excluded Breeds: {breeds}")
         return paths
 
