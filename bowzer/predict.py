@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from .constants import SEED
-from .data import Transform
+from .data import Inference
 from .model import BowzerNet
 from .utils import open_image, open_pickle, get_model_path, get_model_settings
 
@@ -36,15 +36,13 @@ class Predictor:
         self.model_name = model_name
         self.model_path = get_model_path(model_name)
         self.model_settings = open_pickle(get_model_settings(self.model_path))
-        self.data_module = Transform(self.model_settings)
-        self.dataloader_train, self.dataloader_val, self.dataloader_test = (
-            self.data_module.process()
-        )
-        self.num_classes = self.data_module.num_classes
+        self.inference_data_module = Inference(self.model_settings)
+        self.dataloader_inference = self.inference_data_module.process()
+        self.num_classes = self.inference_data_module.num_classes
         self.model = BowzerNet(self.num_classes).to(DEVICE)
         self.model.load_state_dict(torch.load(self.model_path, weights_only=False))
         self.train_embeddings, self.train_batch_labels, self.train_batch_image_paths = (
-            self.get_embeddings_labels(self.model, self.dataloader_train)
+            self.get_embeddings_labels(self.model, self.dataloader_inference)
         )
         self.saved_images = []
         self.target_label = None
@@ -82,7 +80,9 @@ class Predictor:
         """
         target_image = open_image(image_path)
         image_tensor = (
-            self.data_module.train_transforms(target_image).unsqueeze(0).to(DEVICE)
+            self.inference_data_module.train_transforms(target_image)
+            .unsqueeze(0)
+            .to(DEVICE)
         )
         return image_tensor
 
@@ -177,7 +177,9 @@ class Predictor:
         scores_ranked = np.argsort(self.target_prediction_scores)[::-1]
         ranked_breeds = [
             (
-                self.data_module.get_idx_label(self.train_batch_labels[i].item()),
+                self.inference_data_module.get_idx_label(
+                    self.train_batch_labels[i].item()
+                ),
                 self.train_batch_image_paths[i],
                 (self.target_prediction_scores[i].item() + 1) / 2,  # similarity score
             )
