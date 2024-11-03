@@ -13,7 +13,6 @@ class BowzerNet(nn.Module):
         """
         super().__init__()
         self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
-        # self.model.fc = nn.Linear(self.model.fc.in_features, num_classes)
         self.model.fc = nn.Sequential(
             nn.Linear(self.model.fc.in_features, 128),
             nn.Dropout(0.5),
