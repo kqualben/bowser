@@ -205,7 +205,7 @@ class Predictor:
         preds_proba = self.prediction_probabilities(self.target_predictions)
         breed_proba = {
             k: preds_proba.data[v].item()
-            for k, v in self.data_module.class_dict.items()
+            for k, v in self.inference_data_module.class_dict.items()
         }
         return breed_proba
 
@@ -223,6 +223,30 @@ class Predictor:
         function to return top n `breed_ranking`
         """
         return self.breed_ranking[:n]
+
+    def show_breed_prob_chart(self, save: bool = False):
+        target_label = f"{'Target' if self.target_label is None else self.target_label}"
+        fig, ax = plt.subplots(1, 1)
+        sorted_breed_proba = dict(
+            sorted(
+                self.breed_probabilities.items(),
+                key=lambda item: item[1],
+                reverse=False,
+            )
+        )
+        plt.barh(sorted_breed_proba.keys(), sorted_breed_proba.values())
+        ax.set_ylabel("Breed")
+        ax.set_xlabel("Probability")
+        ax.set_title(f"Breed Matches for {target_label}")
+        fig.tight_layout()
+        if save:
+            path = self.target_image_path.replace("targets", "predictions").replace(
+                ".jpg",
+                f"_breed_probabilities_{'_'.join(self.model_name.split('_')[::-1][:2])}.jpg",
+            )
+            plt.savefig(path)
+            self.saved_images.append(path)
+        plt.show()
 
     def show_predicted_images(
         self, top_n_breeds: int, scaler: int = 3, save: bool = False
