@@ -1,0 +1,107 @@
+2024-11-02 17:32:53,965 - INFO - Model Results will be saved to: model_store/trained_20241102/model_173253
+2024-11-02 17:32:53,966 - INFO - Number of classes: 25
+2024-11-02 17:32:54,393 - INFO - Training 50 epochs, lr: 1e-05...
+2024-11-02 17:32:54,393 - INFO - EPOCH 1:
+2024-11-02 17:33:00,829 - INFO - train_loss: 3.2111 val_loss: 3.1813 train_accuracy: 0.0447 val_accuracy: 0.0842
+2024-11-02 17:33:00,830 - INFO - EPOCH 2:
+2024-11-02 17:33:06,761 - INFO - train_loss: 3.1509 val_loss: 3.1225 train_accuracy: 0.1067 val_accuracy: 0.2086
+2024-11-02 17:33:06,761 - INFO - EPOCH 3:
+2024-11-02 17:33:12,786 - INFO - train_loss: 3.0624 val_loss: 3.0094 train_accuracy: 0.2110 val_accuracy: 0.3503
+2024-11-02 17:33:12,788 - INFO - EPOCH 4:
+2024-11-02 17:33:18,715 - INFO - train_loss: 2.9238 val_loss: 2.8177 train_accuracy: 0.3211 val_accuracy: 0.4733
+2024-11-02 17:33:18,716 - INFO - EPOCH 5:
+2024-11-02 17:33:24,580 - INFO - train_loss: 2.6944 val_loss: 2.5313 train_accuracy: 0.4157 val_accuracy: 0.5949
+2024-11-02 17:33:24,581 - INFO - EPOCH 6:
+2024-11-02 17:33:30,615 - INFO - train_loss: 2.4260 val_loss: 2.2544 train_accuracy: 0.5040 val_accuracy: 0.6618
+2024-11-02 17:33:30,616 - INFO - EPOCH 7:
+2024-11-02 17:33:36,655 - INFO - train_loss: 2.1537 val_loss: 1.9264 train_accuracy: 0.5917 val_accuracy: 0.7286
+2024-11-02 17:33:36,656 - INFO - EPOCH 8:
+2024-11-02 17:33:42,774 - INFO - train_loss: 1.8732 val_loss: 1.6870 train_accuracy: 0.6560 val_accuracy: 0.7487
+2024-11-02 17:33:42,775 - INFO - EPOCH 9:
+2024-11-02 17:33:48,756 - INFO - train_loss: 1.6164 val_loss: 1.4061 train_accuracy: 0.7202 val_accuracy: 0.7928
+2024-11-02 17:33:48,757 - INFO - EPOCH 10:
+2024-11-02 17:33:54,389 - INFO - train_loss: 1.3940 val_loss: 1.2115 train_accuracy: 0.7592 val_accuracy: 0.7955
+2024-11-02 17:33:54,390 - INFO - EPOCH 11:
+2024-11-02 17:34:00,010 - INFO - train_loss: 1.2117 val_loss: 1.0371 train_accuracy: 0.7970 val_accuracy: 0.8142
+2024-11-02 17:34:00,011 - INFO - EPOCH 12:
+2024-11-02 17:34:05,820 - INFO - train_loss: 1.0033 val_loss: 0.9182 train_accuracy: 0.8349 val_accuracy: 0.8275
+2024-11-02 17:34:05,821 - INFO - EPOCH 13:
+2024-11-02 17:34:11,440 - INFO - train_loss: 0.8978 val_loss: 0.7830 train_accuracy: 0.8503 val_accuracy: 0.8543
+2024-11-02 17:34:11,440 - INFO - EPOCH 14:
+2024-11-02 17:34:17,083 - INFO - train_loss: 0.7793 val_loss: 0.6944 train_accuracy: 0.8739 val_accuracy: 0.8529
+2024-11-02 17:34:17,084 - INFO - EPOCH 15:
+2024-11-02 17:34:22,948 - INFO - train_loss: 0.6558 val_loss: 0.6411 train_accuracy: 0.8985 val_accuracy: 0.8583
+2024-11-02 17:34:22,949 - INFO - EPOCH 16:
+2024-11-02 17:34:28,786 - INFO - train_loss: 0.5758 val_loss: 0.5722 train_accuracy: 0.9019 val_accuracy: 0.8690
+2024-11-02 17:34:28,787 - INFO - EPOCH 17:
+2024-11-02 17:34:34,475 - INFO - train_loss: 0.5147 val_loss: 0.5222 train_accuracy: 0.9157 val_accuracy: 0.8783
+2024-11-02 17:34:34,476 - INFO - EPOCH 18:
+2024-11-02 17:34:40,338 - INFO - train_loss: 0.4289 val_loss: 0.4868 train_accuracy: 0.9295 val_accuracy: 0.8783
+2024-11-02 17:34:40,339 - INFO - EPOCH 19:
+2024-11-02 17:34:46,141 - INFO - train_loss: 0.3965 val_loss: 0.4590 train_accuracy: 0.9364 val_accuracy: 0.8944
+2024-11-02 17:34:46,142 - INFO - EPOCH 20:
+2024-11-02 17:34:51,878 - INFO - train_loss: 0.3209 val_loss: 0.4437 train_accuracy: 0.9530 val_accuracy: 0.8837
+2024-11-02 17:34:51,879 - INFO - EPOCH 21:
+2024-11-02 17:34:57,821 - INFO - train_loss: 0.2910 val_loss: 0.4434 train_accuracy: 0.9622 val_accuracy: 0.8824
+2024-11-02 17:34:57,822 - INFO - EPOCH 22:
+2024-11-02 17:35:03,657 - INFO - train_loss: 0.2710 val_loss: 0.4281 train_accuracy: 0.9610 val_accuracy: 0.8850
+2024-11-02 17:35:03,658 - INFO - EPOCH 23:
+2024-11-02 17:35:09,392 - INFO - train_loss: 0.2438 val_loss: 0.3944 train_accuracy: 0.9702 val_accuracy: 0.8930
+2024-11-02 17:35:09,393 - INFO - EPOCH 24:
+2024-11-02 17:35:15,143 - INFO - train_loss: 0.2242 val_loss: 0.3959 train_accuracy: 0.9667 val_accuracy: 0.8917
+2024-11-02 17:35:15,145 - INFO - EPOCH 25:
+2024-11-02 17:35:20,782 - INFO - train_loss: 0.1893 val_loss: 0.3537 train_accuracy: 0.9765 val_accuracy: 0.9011
+2024-11-02 17:35:20,783 - INFO - EPOCH 26:
+2024-11-02 17:35:26,454 - INFO - train_loss: 0.1796 val_loss: 0.3705 train_accuracy: 0.9788 val_accuracy: 0.8971
+2024-11-02 17:35:26,455 - INFO - EPOCH 27:
+2024-11-02 17:35:32,323 - INFO - train_loss: 0.1697 val_loss: 0.3667 train_accuracy: 0.9839 val_accuracy: 0.8957
+2024-11-02 17:35:32,324 - INFO - EPOCH 28:
+2024-11-02 17:35:38,270 - INFO - train_loss: 0.1433 val_loss: 0.3602 train_accuracy: 0.9811 val_accuracy: 0.9037
+2024-11-02 17:35:38,272 - INFO - EPOCH 29:
+2024-11-02 17:35:44,017 - INFO - train_loss: 0.1351 val_loss: 0.3558 train_accuracy: 0.9845 val_accuracy: 0.8997
+2024-11-02 17:35:44,018 - INFO - EPOCH 30:
+2024-11-02 17:35:49,895 - INFO - train_loss: 0.1042 val_loss: 0.3552 train_accuracy: 0.9925 val_accuracy: 0.9024
+2024-11-02 17:35:49,895 - INFO - EPOCH 31:
+2024-11-02 17:35:55,822 - INFO - train_loss: 0.1061 val_loss: 0.3819 train_accuracy: 0.9920 val_accuracy: 0.8997
+2024-11-02 17:35:55,823 - INFO - EPOCH 32:
+2024-11-02 17:36:01,699 - INFO - train_loss: 0.0941 val_loss: 0.3678 train_accuracy: 0.9880 val_accuracy: 0.8930
+2024-11-02 17:36:01,700 - INFO - EPOCH 33:
+2024-11-02 17:36:07,917 - INFO - train_loss: 0.0950 val_loss: 0.3671 train_accuracy: 0.9925 val_accuracy: 0.9011
+2024-11-02 17:36:07,917 - INFO - EPOCH 34:
+2024-11-02 17:36:13,960 - INFO - train_loss: 0.0829 val_loss: 0.3790 train_accuracy: 0.9931 val_accuracy: 0.8957
+2024-11-02 17:36:13,961 - INFO - EPOCH 35:
+2024-11-02 17:36:19,867 - INFO - train_loss: 0.0714 val_loss: 0.3753 train_accuracy: 0.9948 val_accuracy: 0.9037
+2024-11-02 17:36:19,869 - INFO - EPOCH 36:
+2024-11-02 17:36:26,839 - INFO - train_loss: 0.0671 val_loss: 0.3536 train_accuracy: 0.9948 val_accuracy: 0.9104
+2024-11-02 17:36:26,840 - INFO - EPOCH 37:
+2024-11-02 17:36:32,912 - INFO - train_loss: 0.0686 val_loss: 0.3540 train_accuracy: 0.9943 val_accuracy: 0.9131
+2024-11-02 17:36:32,913 - INFO - EPOCH 38:
+2024-11-02 17:36:38,589 - INFO - train_loss: 0.0650 val_loss: 0.3747 train_accuracy: 0.9925 val_accuracy: 0.8957
+2024-11-02 17:36:38,590 - INFO - EPOCH 39:
+2024-11-02 17:36:44,518 - INFO - train_loss: 0.0651 val_loss: 0.3571 train_accuracy: 0.9931 val_accuracy: 0.9011
+2024-11-02 17:36:44,519 - INFO - EPOCH 40:
+2024-11-02 17:36:50,716 - INFO - train_loss: 0.0540 val_loss: 0.3777 train_accuracy: 0.9954 val_accuracy: 0.9011
+2024-11-02 17:36:50,717 - INFO - EPOCH 41:
+2024-11-02 17:36:56,764 - INFO - train_loss: 0.0624 val_loss: 0.3703 train_accuracy: 0.9954 val_accuracy: 0.8917
+2024-11-02 17:36:56,765 - INFO - EPOCH 42:
+2024-11-02 17:37:03,108 - INFO - train_loss: 0.0540 val_loss: 0.3938 train_accuracy: 0.9948 val_accuracy: 0.9037
+2024-11-02 17:37:03,109 - INFO - EPOCH 43:
+2024-11-02 17:37:09,405 - INFO - train_loss: 0.0575 val_loss: 0.4178 train_accuracy: 0.9920 val_accuracy: 0.8971
+2024-11-02 17:37:09,407 - INFO - EPOCH 44:
+2024-11-02 17:37:15,522 - INFO - train_loss: 0.0380 val_loss: 0.3934 train_accuracy: 0.9983 val_accuracy: 0.9024
+2024-11-02 17:37:15,523 - INFO - EPOCH 45:
+2024-11-02 17:37:21,669 - INFO - train_loss: 0.0376 val_loss: 0.3740 train_accuracy: 0.9989 val_accuracy: 0.9051
+2024-11-02 17:37:21,670 - INFO - EPOCH 46:
+2024-11-02 17:37:27,833 - INFO - train_loss: 0.0411 val_loss: 0.3775 train_accuracy: 0.9971 val_accuracy: 0.9064
+2024-11-02 17:37:27,833 - INFO - EPOCH 47:
+2024-11-02 17:37:34,135 - INFO - train_loss: 0.0446 val_loss: 0.3957 train_accuracy: 0.9931 val_accuracy: 0.9091
+2024-11-02 17:37:34,136 - INFO - EPOCH 48:
+2024-11-02 17:37:40,378 - INFO - train_loss: 0.0375 val_loss: 0.3761 train_accuracy: 0.9983 val_accuracy: 0.9078
+2024-11-02 17:37:40,379 - INFO - EPOCH 49:
+2024-11-02 17:37:46,619 - INFO - train_loss: 0.0378 val_loss: 0.3854 train_accuracy: 0.9977 val_accuracy: 0.9051
+2024-11-02 17:37:46,621 - INFO - EPOCH 50:
+2024-11-02 17:37:52,728 - INFO - train_loss: 0.0379 val_loss: 0.3828 train_accuracy: 0.9971 val_accuracy: 0.8997
+2024-11-02 17:37:52,729 - INFO - Final Evaluation...
+2024-11-02 17:37:55,713 - INFO - Accuracy  87.25% [correct: 2169, total: 2486]
+2024-11-02 17:37:55,714 - INFO - Precision: 0.8762168884277344
+2024-11-02 17:37:55,715 - INFO - Recall: 0.8711588382720947
