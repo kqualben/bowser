@@ -91,11 +91,13 @@ class Transform:
     """
     Load and Transform OxfordIIITPet
 
-    Param:
-    model_settings: ModelSettings dataclass
+    :param ModelSettings model_settings: see bowzer.config.ModelSettings
     """
 
     def __init__(self, model_settings: ModelSettings):
+        """
+        :param ModelSettings model_settings: see bowzer.config.ModelSettings
+        """
         print(f"Model Settings Info: {model_settings.info}")
         self.model_settings = model_settings
         self.train_transforms = self.model_settings.train_transform
@@ -142,7 +144,7 @@ class Transform:
 
     @staticmethod
     def _split_dataset(
-        dataset: Dataset, train_size: float = 0.85
+        dataset: Dataset, train_size: float = 0.9
     ) -> Tuple[Dataset, Dataset]:
         """
         method to split a dataset into train, val segments.
@@ -348,3 +350,52 @@ class Transform:
                 plt.savefig(path)
                 self.saved_images.append(path)
             plt.show()
+
+
+class Inference(Transform):
+    """
+    Load and Transform OxfordIIITPet for Inference.
+
+    :param ModelSettings model_settings: see bowzer.config.ModelSettings
+    """
+
+    def __init__(self, model_settings: ModelSettings):
+        """
+        :param ModelSettings model_settings: see bowzer.config.ModelSettings
+        """
+        super().__init__(model_settings)
+        self._inference_dataset = None
+        self._class_dict = None
+
+    @property
+    def inference_dataset(self) -> Dataset:
+        """
+        property which returns the trainval_dataset dataset class attribute
+        """
+        if self._inference_dataset is None:
+            self._inference_dataset = self._load_transform(
+                include_cats=self.include_cats, transform=self.train_transforms
+            )
+        return self._inference_dataset
+
+    def process(self) -> Tuple:
+        """
+        function to load and process data for training
+
+        Returns:
+        Tuple of dataloaders. train, val, test.
+        """
+        inference = self._dataloader(self.inference_dataset)
+        return inference
+
+    @property
+    def class_dict(self) -> Dict:
+        """
+        property which returns a dictionary mapping breed name to their index label.
+
+        Return:
+        Dict keys are are str breed names and values integer (labels)
+        """
+        if self._class_dict is None:
+            self._class_dict = self.inference_dataset.class_dict
+        return self._class_dict
