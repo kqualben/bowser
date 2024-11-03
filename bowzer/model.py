@@ -15,7 +15,7 @@ class BowzerNet(nn.Module):
         self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
         self.model.fc = nn.Sequential(
             nn.Linear(self.model.fc.in_features, 128),
-            nn.Dropout(0.7),
+            nn.Dropout(0.5),
             nn.ReLU(),
             nn.Linear(128, num_classes),
         )

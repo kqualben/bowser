@@ -82,10 +82,10 @@ prod_config_transforms = {
 
 prod_config = {
     "info": "Final Model Config.",
-    "epochs": 50,
+    "epochs": 100,
     "learning_rate": 0.00001,
     "include_cats": False,
-    "batch_size": 16,
+    "batch_size": 32,
     "resize_n": prod_config_resize_n,
 }
 prod_config.update(prod_config_transforms)

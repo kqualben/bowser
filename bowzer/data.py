@@ -144,7 +144,7 @@ class Transform:
 
     @staticmethod
     def _split_dataset(
-        dataset: Dataset, train_size: float = 0.9
+        dataset: Dataset, train_size: float = 0.85
     ) -> Tuple[Dataset, Dataset]:
         """
         method to split a dataset into train, val segments.

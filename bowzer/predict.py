@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from .constants import SEED
+from .constants import SEED, PROD_MODEL
 from .data import Inference
 from .model import BowzerNet
 from .utils import open_image, open_pickle, get_model_path, get_model_settings
@@ -28,11 +28,12 @@ class Predictor:
     Class to make predictions with bowzer model.
     """
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str = PROD_MODEL):
         """
         :param str model_name: name of folder in 'model_store' that contains model artifacts.
         """
         print(f"Running on device: {DEVICE}")
+        print(f"Using Model: {model_name}")
         self.model_name = model_name
         self.model_path = get_model_path(model_name)
         self.model_settings = open_pickle(get_model_settings(self.model_path))

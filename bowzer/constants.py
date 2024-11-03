@@ -16,3 +16,5 @@ CAT_CLASSES = {
     "Siamese": 32,
     "Sphynx": 33,
 }
+
+PROD_MODEL = "model_153713"
