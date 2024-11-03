@@ -89,3 +89,13 @@ prod_config = {
     "resize_n": prod_config_resize_n,
 }
 prod_config.update(prod_config_transforms)
+
+prod_config_with_cats = {
+    "info": "Final Model Config.",
+    "epochs": 50,
+    "learning_rate": 0.00001,
+    "include_cats": True,
+    "batch_size": 32,
+    "resize_n": prod_config_resize_n,
+}
+prod_config_with_cats.update(prod_config_transforms)
