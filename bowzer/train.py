@@ -32,8 +32,7 @@ class BowzerClassifier:
 
     def __init__(self, model_settings: ModelSettings):
         """
-        :param model_settings: see bowzer.config.ModelSettings
-        :type model_settings: ModelSettings
+        :param ModelSettings model_settings: see bowzer.config.ModelSettings
         """
         print(f"Running on device: {DEVICE}")
         self.model_settings = model_settings
