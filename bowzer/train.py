@@ -149,7 +149,7 @@ class BowzerClassifier:
         :return Dict: Dictionary containing model loss, accuracy metrics as well as epoch info.
         """
         self.run_time = datetime.now()
-        self.batch_path = f"model_store/trained_{self.run_time.strftime('%Y%m%d')}/model_{self.run_time.strftime('%H%M%S')}"
+        self.batch_path = f"../model_store/trained_{self.run_time.strftime('%Y%m%d')}/model_{self.run_time.strftime('%H%M%S')}"
         if save_batch_models:
             self.batch_path += "/batches"
         with suppress(FileExistsError):
