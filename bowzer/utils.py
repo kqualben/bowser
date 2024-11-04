@@ -111,7 +111,7 @@ def get_model_path(model_name: str) -> str:
 
     :return str: path to PyTorch model.
     """
-    for root, _, files in os.walk("model_store", topdown=False):
+    for root, _, files in os.walk("../model_store", topdown=False):
         for file in files:
             if model_name in root and "." not in file:
                 return os.path.join(root, file)
@@ -134,7 +134,7 @@ def get_model_settings(model_path: str) -> str:
         return settings_path
 
 
-def get_target_image_dict(root: str = "./images/targets/") -> Dict[str, dict]:
+def get_target_image_dict(root: str = "../images/targets/") -> Dict[str, dict]:
     """
     function to package up target image names and paths in one consolidated dictionary.
 
