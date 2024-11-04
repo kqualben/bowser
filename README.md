@@ -125,7 +125,7 @@ Even though I was able to configure my IDE and machine to use it's NVIDIA GPU, t
 
 ```
 bowser/
-├── packages/
+├── bowser/
 │ ├── __init__.py
 │ ├── config.py
 │ ├── constants.py
@@ -154,7 +154,7 @@ bowser/
 ```
 
 Descriptions:
-- packages: contains all code used to generate results
+- bowser: contains all code used to generate results
 - images: contains target images and predictions
 - model_store: contains models generated during testing and final model selection.
 - notebooks: contains notebooks used to train models, make predictions, and analyze model performance.
