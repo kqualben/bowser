@@ -122,7 +122,7 @@ I have experience with Cluster/Compute optimization in my regular day to day (vi
 Even though I was able to configure my IDE and machine to use it's NVIDIA GPU, there is more you can do to fully optimize the workflow. Leveraging NVIDIA tools such as Nsight Systems and Nsight Compute can be useful as it provides a lot information on how your model is performing as well as the processor in the back end. I didn't have a ton of time to really dive into these tools, next time it'll be one of the first things I tackle!
 
 # Code Structure
-notebooks\view_performance.ipynb
+
 ```
 bowser/
 ├── packages/
