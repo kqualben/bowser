@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-from .constants import SEED, PROD_MODEL
+from .constants import PROD_MODEL, SEED
 from .data import Inference
 from .model import BowserNet
-from .utils import open_image, open_pickle, get_model_path, get_model_settings
+from .utils import get_model_path, get_model_settings, open_image, open_pickle
 
 plt.rcParams["savefig.bbox"] = "tight"
 

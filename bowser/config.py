@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from torchvision.transforms import v2
 from typing import Type
+
+from torchvision.transforms import v2
 
 
 @dataclass

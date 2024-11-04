@@ -2,6 +2,7 @@ import os
 from contextlib import suppress
 from datetime import datetime
 from typing import Dict, List
+
 import torch
 from torch.nn import CrossEntropyLoss
 from torchmetrics import Precision, Recall
@@ -11,7 +12,6 @@ from .constants import SEED
 from .data import Transform
 from .model import BowserNet
 from .utils import logger, save_json, save_pickle
-
 
 DEVICE = (
     "cuda"

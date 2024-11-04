@@ -1,11 +1,11 @@
 import json
 import logging
 import os
+import pickle
 from typing import Dict, List, Tuple
 
-from PIL import Image
 import matplotlib.pyplot as plt
-import pickle
+from PIL import Image
 
 
 def open_image(image_path: str) -> Image:
