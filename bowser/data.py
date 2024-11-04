@@ -1,5 +1,4 @@
-import os
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -91,12 +90,12 @@ class Transform:
     """
     Load and Transform OxfordIIITPet
 
-    :param ModelSettings model_settings: see bowzer.config.ModelSettings
+    :param ModelSettings model_settings: see bowser.config.ModelSettings
     """
 
     def __init__(self, model_settings: ModelSettings):
         """
-        :param ModelSettings model_settings: see bowzer.config.ModelSettings
+        :param ModelSettings model_settings: see bowser.config.ModelSettings
         """
         print(f"Model Settings Info: {model_settings.info}")
         self.model_settings = model_settings
@@ -356,12 +355,12 @@ class Inference(Transform):
     """
     Load and Transform OxfordIIITPet for Inference.
 
-    :param ModelSettings model_settings: see bowzer.config.ModelSettings
+    :param ModelSettings model_settings: see bowser.config.ModelSettings
     """
 
     def __init__(self, model_settings: ModelSettings):
         """
-        :param ModelSettings model_settings: see bowzer.config.ModelSettings
+        :param ModelSettings model_settings: see bowser.config.ModelSettings
         """
         super().__init__(model_settings)
         self._inference_dataset = None

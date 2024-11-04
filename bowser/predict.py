@@ -6,7 +6,7 @@ import torch
 
 from .constants import SEED, PROD_MODEL
 from .data import Inference
-from .model import BowzerNet
+from .model import BowserNet
 from .utils import open_image, open_pickle, get_model_path, get_model_settings
 
 plt.rcParams["savefig.bbox"] = "tight"
@@ -23,9 +23,9 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-class Predictor:
+class BowserPredict:
     """
-    Class to make predictions with bowzer model.
+    Class to make predictions with bowser model.
     """
 
     def __init__(self, model_name: str = PROD_MODEL):
@@ -40,7 +40,7 @@ class Predictor:
         self.inference_data_module = Inference(self.model_settings)
         self.dataloader_inference = self.inference_data_module.process()
         self.num_classes = self.inference_data_module.num_classes
-        self.model = BowzerNet(self.num_classes).to(DEVICE)
+        self.model = BowserNet(self.num_classes).to(DEVICE)
         self.model.load_state_dict(torch.load(self.model_path, weights_only=False))
         self.train_embeddings, self.train_batch_labels, self.train_batch_image_paths = (
             self.get_embeddings_labels(self.model, self.dataloader_inference)
@@ -297,7 +297,7 @@ class Predictor:
     ) -> None:
         """
         function to loop through dictionary and make predictions
-        :param dict image_dict: see `bowzer.utils.get_target_image_dict`
+        :param dict image_dict: see `bowser.utils.get_target_image_dict`
         :param int top_n_breeds: number of matches to show per target image
         :param bool save: when True, images get saved to prediction directory under target folder.
         """

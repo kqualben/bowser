@@ -2,9 +2,9 @@ import torch.nn as nn
 from torchvision.models import ResNet50_Weights, resnet50
 
 
-class BowzerNet(nn.Module):
+class BowserNet(nn.Module):
     """
-    Bowzer Model Module
+    Bowser Model Module
     """
 
     def __init__(self, num_classes: int):

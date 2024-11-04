@@ -9,7 +9,7 @@ from torchmetrics import Precision, Recall
 from .config import ModelSettings
 from .constants import SEED
 from .data import Transform
-from .model import BowzerNet
+from .model import BowserNet
 from .utils import logger, save_json, save_pickle
 
 
@@ -25,14 +25,14 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-class BowzerClassifier:
+class BowserClassifier:
     """
-    Class to train BowzerNet using ModelSettings.
+    Class to train BowserNet using ModelSettings.
     """
 
     def __init__(self, model_settings: ModelSettings):
         """
-        :param ModelSettings model_settings: see bowzer.config.ModelSettings
+        :param ModelSettings model_settings: see bowser.config.ModelSettings
         """
         print(f"Running on device: {DEVICE}")
         self.model_settings = model_settings
@@ -164,7 +164,7 @@ class BowzerClassifier:
 
         num_classes = self.data_module.num_classes
         self.logger.info(f"Number of classes: {num_classes}")
-        self.model = BowzerNet(num_classes).to(DEVICE)
+        self.model = BowserNet(num_classes).to(DEVICE)
         self.loss_fn = CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
 
