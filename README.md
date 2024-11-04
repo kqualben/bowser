@@ -1,5 +1,5 @@
 # Bowser
-A Convolution Neural Network (CNN) which classifies dog breeds.
+A Convolution Neural Network (CNN) that classifies dog breeds.
 
 - [Motivation](#Motivation)
 - [Goal](#Goal)
