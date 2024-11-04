@@ -51,14 +51,16 @@ Outside of general model performance, what *is* the best way to measure whether 
 
 The definition of a "bowser" in this case is subjective. There isn't necessarily a right answer when predicting a dog breed for a human.
 
-As a benchmark I'll use Anwar, the dog which belongs to Sydney's character in the movie. Anwar isn't a pure bred dog; Sydney refers to Anwar as a "puggle". A puggle is a mix between a Pug and a Beagle. If I predict Anwar's top breed to be a Pug, I'll be happy.
+As a benchmark I'll use Anwar, the dog which belongs to Sydney's character in the movie. Anwar isn't a pure bred dog; Sydney refers to Anwar as a "puggle". A puggle is a mix between a Pug and a Beagle. If I predict Anwar's top breed to be a Pug, I'll have confidence in the model.
 
 I'm using Cosine Similarity to measure the "similarity" between the target image tensors and the dog breed image tensors. This is relatively standard for image classification, however there are other metrics which can be used such as Cosine Distance and Euclidean Distance.
 
 The top breeds are then ranked by cosine similarity.
 
+To view more information about model selection and performance, please visit:
+
 ## Results
-Below are the main results from my final model. The target images draw signficant similarities between multiple images, meaning there isn't necessarily 1 image that stands out in comparison to the rest. Note that the top "breeds" for each target align with each other. This gives me confidence in the model!
+Below are the main results from my final model. The target images draw signficant similarities between multiple images, meaning there isn't 1 image that stands out in comparison to the rest. Note that the top "breeds" for each target align with each other. This gives me confidence in the model!
 
 ### Anwar:
 Success! Anwar matches to a Pug over 99% of the time! <br/>
@@ -74,9 +76,28 @@ Success! Anwar matches to a Pug over 99% of the time! <br/>
 ### Pete:
 ![Pete Headshot](images/predictions/pete/headshot_alt_top_3_breeds_153713_model.jpg)
 
+To view more information about these predictions, please visit: 
 
-## Learnings
 
+## Next Steps and Ideas
+In the future, I would like to explore the following:
+
+### API Integration
+When I tell family and friends what I've been working on for fun... they always say "you have tell me my bowser!" <br/>
+Eventually, I would like to set up a workflow where I can simply snap a photo or upload one from my camera roll and then get a prediction.
+
+### Generative Adversarial Network (GAN)
+Adding a GAN model can take this project to the next level. The GAN model would act as a "generator" and the CNN would be a "discriminator." Together, these models can generate new images which will help with model training as well as making predictions.
+
+The application of a GAN could look like:
+- generating new images for a given class to use for training
+- generating images which resemble mix-breeds e.g. Golden Doodle and Cavapoo
+- generating new images purely based on the target image
+
+### GPU Optimization
+I have experience with Cluster/Compute optimization in my regular day to day (via Databricks). <br/>
+
+Even though I was able to configure my machine and IDE to use it's NVIDIA GPU, there is more you can do to fully optimize the workflow. Leveraging NVIDIA tools such as Nsight Systems and Nsight Compute can be useful as it provides a lot information on how your model is performing as well as the processor in the back end. I didn't have a ton of time to really dive into these tools, but from what I saw there is so much more to benefit from!
 
 # Code Structure
 ```
