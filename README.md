@@ -105,7 +105,7 @@ To view more information about these predictions, please visit: `notebooks/predi
 In the future, I would like to explore the following:
 
 ### API Integration
-When I tell family and friends what I've been working on for fun... they always say "you have tell me my bowser!" <br/>
+When I tell family and friends what I've been working on for fun... they always say "you have to tell me my bowser!" <br/>
 Eventually, I would like to set up a workflow where I can simply snap a photo or upload one from my camera roll and then get a prediction.
 
 ### Generative Adversarial Network (GAN)
